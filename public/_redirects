@@ -1,0 +1,5 @@
+# Clean URL redirect rules
+# Redirect old or alternate routes if needed
+/tournaments/   /tournaments   301
+/leaderboards/  /leaderboards  301
+/dashboard/     /dashboard     301
