@@ -1,4 +1,4 @@
-name: Deploy to Cloudflare Pages
+name: Deploy to Cloudflare Workers
 
 on:
   push:
@@ -36,12 +36,12 @@ jobs:
           echo "Static build verified successfully."
 
       # Optional direct deployment via GitHub Actions (if CLOUDFLARE_API_TOKEN is set in repo secrets)
-      - name: Deploy to Cloudflare Pages
+      - name: Deploy to Cloudflare Workers
         if: env.CLOUDFLARE_API_TOKEN != '' && github.ref == 'refs/heads/main'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=fcforge
+          command: deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

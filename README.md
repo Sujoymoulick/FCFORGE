@@ -14,56 +14,50 @@
 
 ---
 
-## ☁️ Cloudflare Pages Git Deployment Guide
+## ☁️ Cloudflare Workers Deployment Guide
 
-FCForge is optimized for instant, zero-cold-start deployment on Cloudflare's edge network via Git repository connection.
+FCForge is configured to deploy directly to **Cloudflare Workers** using **Workers with Static Assets**, running on Cloudflare's global edge network with sub-millisecond asset delivery and zero serverless execution cold-starts.
 
-### Method 1: Cloudflare Dashboard Git Connection (Recommended)
+### Method 1: Cloudflare Dashboard Git Connection (Workers Builds)
 
 1. Log in to the [Cloudflare Dashboard](https://dash.cloudflare.com/).
 2. In the left navigation, go to **Compute (Workers & Pages)** > **Create application**.
-3. Select the **Pages** tab and click **Connect to Git**.
-4. Choose **GitHub** and select your repository:
+3. Under the **Workers** section, click **Import a repository** (Workers Builds).
+4. Connect your GitHub account and select:
    * **Repository**: `Sujoymoulick/FCFORGE`
-5. Configure the Build & Deployment Settings:
-   * **Project name**: `fcforge`
-   * **Production branch**: `main`
-   * **Framework preset**: `Astro`
+5. Configure the Build Settings:
    * **Build command**: `npm run build`
-   * **Build output directory**: `dist`
-   * **Root directory**: `/` (leave blank or `/`)
-6. In **Environment variables** (Advanced):
-   * Add variable: `NODE_VERSION` = `22` (or relies automatically on `.nvmrc` / `.node-version`)
+   * **Deploy command**: `npx wrangler deploy`
+   * **Production branch**: `main`
+6. (Optional) In **Environment variables**:
+   * `NODE_VERSION` = `22` (automatically detected from `.nvmrc` / `.node-version`)
 7. Click **Save and Deploy**.
 
-Cloudflare will automatically build the site and deploy it globally to a free `*.pages.dev` subdomain (with optional custom domain). Every subsequent push to `main` will trigger an automated deployment, and pull requests get instant preview URLs.
+Cloudflare will automatically build the project and deploy it to a live `*.workers.dev` subdomain (with optional custom domain). Every subsequent `git push` to `main` triggers an automatic edge deployment.
 
 ---
 
 ### Method 2: Local Preview & Deployment via Wrangler
 
-You can also preview and deploy directly from your local terminal using Wrangler:
+You can also test and deploy directly from your terminal using Wrangler:
 
 ```sh
-# 1. Build production static bundle
-npm run build
+# 1. Build and preview locally in the official Cloudflare workerd runtime
+npm run preview:workers
 
-# 2. Preview locally using Cloudflare's workerd environment
-npm run preview:cloudflare
-
-# 3. Direct deploy to Cloudflare Pages (requires Cloudflare login)
-npm run deploy:cloudflare
+# 2. Build and deploy to Cloudflare Workers
+npm run deploy
 ```
 
 ---
 
 ## 📁 Cloudflare Configuration Files
 
-* **[`wrangler.jsonc`](./wrangler.jsonc)**: Official Cloudflare Pages project configuration (`name`, `dist` output, `nodejs_compat`).
-* **[`.nvmrc`](./.nvmrc)** & **[`.node-version`](./.node-version)**: Pins Node.js version to 22.x for Cloudflare's build image.
-* **[`public/_headers`](./public/_headers)**: Edge caching rules (immutable 1-year cache for `/messimodel.glb` 3D model, fonts, and hashed Vite assets) + security headers.
+* **[`wrangler.jsonc`](./wrangler.jsonc)**: Official Cloudflare Workers configuration with `"assets": { "directory": "./dist" }` and `nodejs_compat`.
+* **[`.nvmrc`](./.nvmrc)** & **[`.node-version`](./.node-version)**: Pins Node.js version to 22.x for Cloudflare's build environment.
+* **[`public/_headers`](./public/_headers)**: Edge caching rules (immutable 1-year cache for 3D model `/messimodel.glb`, fonts, and hashed Vite assets) + security headers.
 * **[`public/_redirects`](./public/_redirects)**: URL normalization and redirect rules.
-* **[`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml)**: Automated CI/CD pipeline for GitHub Actions.
+* **[`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml)**: Automated CI/CD pipeline for GitHub Actions deploying to Cloudflare Workers.
 
 ---
 
