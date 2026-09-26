@@ -1,0 +1,158 @@
+---
+interface Props {
+  model?: string;
+  position?: [number, number, number];
+  scale?: [number, number, number] | number;
+  rotation?: [number, number, number];
+  cameraPosition?: [number, number, number];
+  className?: string;
+}
+
+const {
+  model = '/messimodel.glb',
+  position = [0, 0, 0],
+  scale = [1, 1, 1],
+  rotation = [0, 0, 0],
+  cameraPosition = [0.35, 1.35, 4.85],
+  className = ''
+} = Astro.props;
+---
+
+<div
+  id="fcforge-player-wrapper"
+  class={`relative w-full h-full min-h-[500px] overflow-hidden ${className}`}
+  data-model={model}
+  data-pos={JSON.stringify(position)}
+  data-scale={JSON.stringify(scale)}
+  data-rot={JSON.stringify(rotation)}
+>
+  <!-- 3D WebGL Canvas Layer (Interactive Drag-to-Rotate) -->
+  <canvas
+    id="fcforge-player-canvas"
+    class="w-full h-full absolute inset-0 z-10 touch-none pointer-events-auto cursor-grab active:cursor-grabbing"
+    aria-label="Interactive 3D Lionel Messi football player model. Click and drag to rotate 360 degrees."
+  ></canvas>
+
+  <!-- WebGL Loading Telemetry Spinner (DESIGN.md) -->
+  <div
+    id="fcforge-player-loader"
+    class="absolute inset-0 z-20 flex items-center justify-center pointer-events-none transition-opacity duration-700 bg-[var(--fc-canvas)]/30 backdrop-blur-xs"
+  >
+    <div class="flex flex-col items-center gap-3 p-4 rounded-[6px] bg-[var(--fc-canvas-soft)]/95 border border-[var(--fc-hairline)] shadow-2xl">
+      <div class="relative flex items-center justify-center w-12 h-12">
+        <div class="w-10 h-10 rounded-full border border-[var(--fc-hairline)]"></div>
+        <div class="absolute w-10 h-10 rounded-full border-t-2 border-[var(--fc-gold)] animate-[spin_1.2s_linear_infinite]"></div>
+        <span class="text-xs">⚽</span>
+      </div>
+      <div class="space-y-1.5 text-center font-mono">
+        <div id="fcforge-loader-pct" class="text-[11px] font-medium text-[#f7f5f0] tracking-wider uppercase">
+          SYNCHRONIZING 3D ATHLETE ...
+        </div>
+        <div class="w-40 h-1 rounded-full bg-[var(--fc-canvas)] overflow-hidden border border-[var(--fc-hairline)]">
+          <div id="fcforge-loader-bar" class="h-full bg-[var(--fc-gold)] w-1/12 transition-all duration-150"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WebGL Unavailable Fallback Poster -->
+  <div
+    id="fcforge-player-fallback"
+    class="absolute inset-0 z-0 hidden flex flex-col items-center justify-center pointer-events-none"
+  >
+    <div class="w-64 h-64 rounded-full bg-gradient-to-tr from-[var(--fc-cyan)]/15 via-[#0A0E14] to-[var(--fc-green)]/15 border border-[var(--fc-cyan)]/30 backdrop-blur-xl flex items-center justify-center shadow-2xl">
+      <div class="text-center p-6 space-y-2">
+        <div class="w-12 h-12 rounded-full bg-[var(--fc-cyan)]/10 border border-[var(--fc-cyan)]/40 mx-auto flex items-center justify-center text-[var(--fc-cyan)] font-display font-black text-lg">
+          ⚽
+        </div>
+        <span class="font-display font-black text-2xl text-[var(--fc-cyan)] block">#10 ARENA PRO</span>
+        <span class="text-[10px] font-mono tracking-widest text-white uppercase block">FCFORGE VIRTUAL STADIUM</span>
+        <span class="text-[9px] font-mono tracking-wider text-[var(--fc-green)] block">HARDWARE READY</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { FCForgePlayer3DScene } from './FCForgePlayer3DScene';
+
+  const wrapper = document.getElementById('fcforge-player-wrapper');
+  const canvas = document.getElementById('fcforge-player-canvas') as HTMLCanvasElement;
+  const loader = document.getElementById('fcforge-player-loader');
+  const loaderPct = document.getElementById('fcforge-loader-pct');
+  const loaderBar = document.getElementById('fcforge-loader-bar');
+  const fallback = document.getElementById('fcforge-player-fallback');
+
+  const modelPath = wrapper?.dataset.model || '/messimodel.glb';
+
+  // Listen to live loading progress
+  window.addEventListener('fcforge:model-progress', ((e: CustomEvent) => {
+    if (loaderBar && loaderPct && typeof e.detail?.percent === 'number') {
+      loaderBar.style.width = `${e.detail.percent}%`;
+      loaderPct.textContent = `LOADING ATHLETE ... ${e.detail.percent}%`;
+    }
+  }) as EventListener);
+
+  let sceneInstance: FCForgePlayer3DScene | null = null;
+
+  if (canvas && wrapper) {
+    try {
+      sceneInstance = new FCForgePlayer3DScene({
+        container: wrapper,
+        canvas: canvas,
+        modelPath: modelPath,
+        onLoadComplete: () => {
+          if (loaderBar) loaderBar.style.width = '100%';
+          if (loaderPct) loaderPct.textContent = 'ATHLETE ACTIVE // 360° READY';
+          if (loader) {
+            setTimeout(() => {
+              loader.style.opacity = '0';
+              setTimeout(() => loader.remove(), 700);
+            }, 300);
+          }
+        },
+        onError: () => {
+          if (loader) loader.remove();
+          if (fallback) fallback.classList.remove('hidden');
+        }
+      });
+
+      let lastChapter = 1;
+      let ticking = false;
+
+      // Passive scroll progress listener
+      const onScroll = () => {
+        if (!ticking) {
+          window.requestAnimationFrame(() => {
+            const scrollRange = document.documentElement.scrollHeight - window.innerHeight;
+            if (scrollRange > 0) {
+              const progress = window.scrollY / scrollRange;
+              sceneInstance?.setScrollProgress(progress);
+
+              const currentChapter = sceneInstance?.getCurrentChapter() || 1;
+              if (currentChapter !== lastChapter) {
+                lastChapter = currentChapter;
+                window.dispatchEvent(
+                  new CustomEvent('fcforge:chapter', { detail: { chapter: currentChapter } })
+                );
+              }
+            }
+            ticking = false;
+          });
+          ticking = true;
+        }
+      };
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+
+      // Expose globally for runtime inspection or testing
+      (window as any).__FCFORGE_PLAYER_3D__ = sceneInstance;
+
+    } catch (err) {
+      console.warn('FCForge WebGL context creation failed:', err);
+      if (loader) loader.remove();
+      if (fallback) fallback.classList.remove('hidden');
+    }
+  }
+</script>

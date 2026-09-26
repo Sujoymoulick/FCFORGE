@@ -1,0 +1,106 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { MOCK_LEADERBOARD } from '../data/mock/leaderboard';
+import UserAvatar from '../components/auth/UserAvatar.astro';
+---
+
+<Layout title="Global Leaderboards — FCForge Esports Rankings">
+  <div class="max-w-7xl mx-auto px-4 sm:px-8 py-10 space-y-8">
+    <!-- Header (DESIGN.md) -->
+    <div class="space-y-3">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-[4px] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)]">
+        <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-gold)]"></span>
+        <span class="text-[11px] font-mono font-medium tracking-tight text-[var(--fc-primary)] uppercase">
+          BROADCAST TELEMETRY
+        </span>
+      </div>
+      <h1 class="font-display font-normal text-4xl sm:text-5xl text-[#f7f5f0] tracking-[-0.035em]">
+        Global <span class="font-serif-italic text-[var(--fc-gold)] text-5xl sm:text-6xl">leaderboards.</span>
+      </h1>
+      <p class="text-sm text-[var(--fc-body)] max-w-2xl leading-relaxed">
+        Official player ratings across eFootball™ Mobile and EA SPORTS FC™ Mobile based on verified tournament victories, match win rates, and ELO points.
+      </p>
+    </div>
+
+    <!-- Filter Tabs (DESIGN.md button-secondary-ghost) -->
+    <div class="flex flex-wrap items-center gap-2 border-b border-[var(--fc-hairline)] pb-3">
+      <button class="px-3 py-1 text-xs font-mono font-medium rounded-[3px] bg-[#f7f5f0] text-[#161311]">
+        GLOBAL RANKING
+      </button>
+      <button class="px-3 py-1 text-xs font-mono font-medium rounded-[3px] bg-[var(--fc-canvas-soft)] text-[var(--fc-body)] hover:text-[#f7f5f0] border border-[var(--fc-hairline)] transition-colors">
+        eFOOTBALL™ MOBILE
+      </button>
+      <button class="px-3 py-1 text-xs font-mono font-medium rounded-[3px] bg-[var(--fc-canvas-soft)] text-[var(--fc-body)] hover:text-[#f7f5f0] border border-[var(--fc-hairline)] transition-colors">
+        EA SPORTS FC™ MOBILE
+      </button>
+      <button class="px-3 py-1 text-xs font-mono font-medium rounded-[3px] bg-[var(--fc-canvas-soft)] text-[var(--fc-body)] hover:text-[#f7f5f0] border border-[var(--fc-hairline)] transition-colors">
+        APAC REGION
+      </button>
+      <button class="px-3 py-1 text-xs font-mono font-medium rounded-[3px] bg-[var(--fc-canvas-soft)] text-[var(--fc-body)] hover:text-[#f7f5f0] border border-[var(--fc-hairline)] transition-colors">
+        EUROPE REGION
+      </button>
+    </div>
+
+    <!-- Leaderboard Data Table (DESIGN.md ex-data-table-cell) -->
+    <div class="rounded-[6px] border border-[var(--fc-hairline)] bg-[var(--fc-canvas-soft)] overflow-hidden shadow-xl">
+      <!-- Table Header -->
+      <div class="grid grid-cols-12 gap-2 px-5 py-3 bg-[var(--fc-canvas)] border-b border-[var(--fc-hairline)] font-mono text-[10px] text-[var(--fc-mute)] uppercase tracking-wider">
+        <div class="col-span-2 sm:col-span-1 text-center">RANK</div>
+        <div class="col-span-6 sm:col-span-5">ATHLETE & REGION</div>
+        <div class="col-span-4 sm:col-span-2 text-right">ELO RATING</div>
+        <div class="hidden sm:block sm:col-span-2 text-right">WIN RATE / MATCHES</div>
+        <div class="hidden sm:block sm:col-span-2 text-right">PRIZE EARNINGS</div>
+      </div>
+
+      <!-- Table Body Rows -->
+      <div class="divide-y divide-[var(--fc-hairline)]">
+        {MOCK_LEADERBOARD.map((entry, index) => (
+          <div class={`grid grid-cols-12 gap-2 px-5 py-3.5 items-center transition-colors hover:bg-[var(--fc-canvas-subtle)] ${index === 0 ? 'bg-[var(--fc-gold)]/5' : ''}`}>
+            <!-- Rank -->
+            <div class="col-span-2 sm:col-span-1 text-center font-mono font-medium text-sm">
+              <span class={entry.rank === 1 ? 'text-[var(--fc-gold)] font-bold' : entry.rank <= 3 ? 'text-[#f7f5f0]' : 'text-[var(--fc-mute)]'}>
+                #{entry.rank.toString().padStart(2, '0')}
+              </span>
+            </div>
+
+            <!-- Player & Nation -->
+            <div class="col-span-6 sm:col-span-5 flex items-center gap-3">
+              <UserAvatar username={entry.username} avatarUrl={entry.avatarUrl} size="sm" />
+              <div class="truncate">
+                <div class="flex items-center gap-1.5">
+                  <a href={`/profile/${entry.username}`} class="font-display font-medium text-xs sm:text-sm text-[#f7f5f0] hover:text-[var(--fc-gold)] transition-colors truncate">
+                    {entry.username}
+                  </a>
+                  {entry.verified && (
+                    <span class="text-[var(--fc-gold)] text-[10px]" title="Tournament Verified">✓</span>
+                  )}
+                </div>
+                <span class="text-[10px] font-mono text-[var(--fc-mute)] block">
+                  {entry.region} · {entry.country}
+                </span>
+              </div>
+            </div>
+
+            <!-- ELO Rating -->
+            <div class="col-span-4 sm:col-span-2 text-right font-mono">
+              <span class="text-xs sm:text-sm font-medium text-[#f7f5f0]">{entry.rating}</span>
+              <span class="text-[9px] text-[var(--fc-mute)] block">POINTS</span>
+            </div>
+
+            <!-- Win Rate -->
+            <div class="hidden sm:block sm:col-span-2 text-right font-mono">
+              <span class="text-xs font-medium text-[#f7f5f0]">{entry.winRate}%</span>
+              <span class="text-[9px] text-[var(--fc-mute)] block">{entry.matchesPlayed} MATCHES</span>
+            </div>
+
+            <!-- Prize Winnings -->
+            <div class="hidden sm:block sm:col-span-2 text-right font-mono">
+              <span class="text-xs font-medium text-[var(--fc-gold)]">{entry.earnings}</span>
+              <span class="text-[9px] text-[var(--fc-mute)] block">USD</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</Layout>

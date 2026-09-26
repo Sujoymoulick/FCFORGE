@@ -1,0 +1,20 @@
+---
+import UserAvatar from './UserAvatar.astro';
+import { getAuthUser } from '../../lib/auth';
+
+const user = getAuthUser();
+---
+
+{user ? (
+  <a href="/dashboard" class="flex items-center gap-3 px-3 py-1.5 rounded-lg border border-[var(--fc-border)] bg-[var(--fc-surface-2)]/80 hover:border-[var(--fc-cyan)]/60 transition-colors group">
+    <UserAvatar src={user.avatar} name={user.name} rank={user.rank} size="sm" />
+    <div class="hidden sm:flex flex-col text-left">
+      <span class="text-xs font-bold text-white group-hover:text-[var(--fc-cyan)] transition-colors line-clamp-1">{user.username}</span>
+      <span class="text-[10px] text-[var(--fc-muted)]">{user.rating} ELO</span>
+    </div>
+  </a>
+) : (
+  <a href="/dashboard" class="esports-btn text-xs py-2 px-4">
+    SIGN IN
+  </a>
+)}

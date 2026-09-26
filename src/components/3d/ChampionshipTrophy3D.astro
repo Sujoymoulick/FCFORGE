@@ -1,0 +1,231 @@
+---
+interface Props {
+  className?: string;
+}
+
+const { className = '' } = Astro.props;
+---
+
+<div
+  id="championship-trophy-wrapper"
+  class={`relative w-full max-w-xl mx-auto rounded-[8px] bg-gradient-to-b from-[#1C1814]/90 via-[#14110E]/95 to-[#0E0C0A] border border-[var(--fc-gold)]/40 shadow-[0_12px_40px_rgba(0,0,0,0.6),0_0_30px_rgba(229,184,105,0.12)] backdrop-blur-md overflow-hidden transition-all duration-300 ${className}`}
+>
+  <!-- Top Telemetry Header Bar -->
+  <div class="flex items-center justify-between px-4 py-2.5 border-b border-[var(--fc-hairline)] bg-[var(--fc-canvas-soft)]/60">
+    <div class="flex items-center gap-2">
+      <span class="relative flex h-2 w-2">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--fc-gold)] opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-2 w-2 bg-[var(--fc-gold)]"></span>
+      </span>
+      <span class="text-[11px] font-mono font-medium tracking-wider text-[var(--fc-gold)] uppercase">
+        OFFICIAL 3D CHAMPIONSHIP TROPHY
+      </span>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--fc-gold)]/15 text-[var(--fc-gold)] border border-[var(--fc-gold)]/30 font-medium">
+        SEASON 4 PODIUM
+      </span>
+      <span class="hidden sm:inline-block text-[10px] font-mono text-[var(--fc-mute)]">
+        360° DRAG TO ROTATE
+      </span>
+    </div>
+  </div>
+
+  <!-- 3D WebGL Canvas Viewport (Height 340px) -->
+  <div class="relative w-full h-[320px] sm:h-[360px] flex items-center justify-center select-none overflow-hidden group">
+    <!-- Subtle Golden Radial Ambient Spot in Center -->
+    <div class="absolute inset-0 bg-radial from-[var(--fc-gold)]/10 via-transparent to-transparent pointer-events-none"></div>
+
+    <!-- WebGL Canvas Layer -->
+    <canvas
+      id="championship-trophy-canvas"
+      class="w-full h-full cursor-grab active:cursor-grabbing touch-none z-10"
+      aria-label="Interactive 3D Championship Trophy model. Click and drag to spin 360 degrees."
+    ></canvas>
+
+    <!-- Floating Top-Left Technical HUD Badge -->
+    <div class="absolute top-3 left-3 z-20 pointer-events-none space-y-1">
+      <div class="px-2 py-0.5 rounded bg-black/60 border border-[var(--fc-hairline)] backdrop-blur-xs text-[10px] font-mono text-[var(--fc-mute)]">
+        WEIGHT: <span class="text-[#f7f5f0] font-medium">14.2 KG</span>
+      </div>
+      <div class="px-2 py-0.5 rounded bg-black/60 border border-[var(--fc-hairline)] backdrop-blur-xs text-[10px] font-mono text-[var(--fc-mute)]">
+        MATERIAL: <span class="text-[var(--fc-gold)] font-medium">24K GOLD & OBSIDIAN</span>
+      </div>
+    </div>
+
+    <!-- Floating Top-Right Reigning Champion HUD Badge -->
+    <div class="absolute top-3 right-3 z-20 pointer-events-none text-right space-y-1">
+      <div class="px-2 py-0.5 rounded bg-black/60 border border-[var(--fc-hairline)] backdrop-blur-xs text-[10px] font-mono text-[var(--fc-mute)]">
+        DEFENDING CUP: <span class="text-[var(--fc-gold)] font-medium">KAGAMI_FC</span>
+      </div>
+      <div class="px-2 py-0.5 rounded bg-black/60 border border-[var(--fc-hairline)] backdrop-blur-xs text-[10px] font-mono text-[var(--fc-mute)]">
+        PRIZE POOL: <span class="text-[#f7f5f0] font-medium">$50,000 USD</span>
+      </div>
+    </div>
+
+    <!-- Bottom Drag Hint Indicator -->
+    <div class="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 pointer-events-none px-3 py-1 rounded-full bg-black/70 border border-[var(--fc-hairline)] backdrop-blur-xs opacity-75 group-hover:opacity-100 transition-opacity">
+      <span class="text-[10px] font-mono text-[var(--fc-gold)] flex items-center gap-1.5">
+        <span>↔</span> <span>DRAG TO INSPECT 360°</span>
+      </span>
+    </div>
+  </div>
+
+  <!-- Interactive Control Bar & Haptic Celebration Actions -->
+  <div class="p-3 border-t border-[var(--fc-hairline)] bg-[var(--fc-canvas-soft)]/80 flex flex-wrap items-center justify-between gap-2.5">
+    <div class="flex items-center gap-2">
+      <!-- 360 Spin Boost Button -->
+      <button
+        type="button"
+        id="btn-trophy-spin"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[#1F1A16] hover:bg-[#2A231D] text-xs font-mono text-[#f7f5f0] border border-[var(--fc-hairline)] hover:border-[var(--fc-gold)]/60 transition-all cursor-pointer active:scale-95 shadow-xs"
+        title="Give the trophy a 360-degree celebration spin"
+      >
+        <span class="text-[var(--fc-gold)]">↺</span>
+        <span>Spin 360°</span>
+      </button>
+
+      <!-- Celebration Flare Button -->
+      <button
+        type="button"
+        id="btn-trophy-flare"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-gradient-to-r from-[var(--fc-gold)]/20 to-[var(--fc-gold)]/10 hover:from-[var(--fc-gold)]/30 hover:to-[var(--fc-gold)]/20 text-xs font-mono text-[var(--fc-gold)] border border-[var(--fc-gold)]/50 hover:border-[var(--fc-gold)] transition-all cursor-pointer active:scale-95 shadow-xs"
+        title="Trigger golden stadium celebration flare"
+      >
+        <span>✨</span>
+        <span>Trigger Flare</span>
+      </button>
+
+      <!-- Specifications Toggle Button -->
+      <button
+        type="button"
+        id="btn-trophy-specs-toggle"
+        class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-[4px] bg-[#1F1A16] hover:bg-[#2A231D] text-xs font-mono text-[var(--fc-mute)] hover:text-[#f7f5f0] border border-[var(--fc-hairline)] transition-all cursor-pointer active:scale-95 shadow-xs"
+      >
+        <span>ⓘ</span>
+        <span>Specs</span>
+      </button>
+    </div>
+
+    <!-- Live Telemetry Status -->
+    <div class="text-[11px] font-mono text-[var(--fc-mute)] flex items-center gap-1.5">
+      <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-green)]"></span>
+      <span>READY FOR FINALS</span>
+    </div>
+  </div>
+
+  <!-- Expandable Technical Specs Drawer (Initially Hidden) -->
+  <div id="trophy-specs-drawer" class="hidden px-4 py-3 border-t border-[var(--fc-hairline)] bg-[#120F0D] text-left text-xs font-mono space-y-2">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+      <div class="p-2 rounded bg-black/40 border border-[var(--fc-hairline)]">
+        <span class="block text-[10px] text-[var(--fc-mute)] uppercase">HEIGHT</span>
+        <span class="font-bold text-[#f7f5f0]">68.5 CM</span>
+      </div>
+      <div class="p-2 rounded bg-black/40 border border-[var(--fc-hairline)]">
+        <span class="block text-[10px] text-[var(--fc-mute)] uppercase">OBSIDIAN BASE</span>
+        <span class="font-bold text-[var(--fc-gold)]">SWEDISH GRANITE</span>
+      </div>
+      <div class="p-2 rounded bg-black/40 border border-[var(--fc-hairline)]">
+        <span class="block text-[10px] text-[var(--fc-mute)] uppercase">GOLD COATING</span>
+        <span class="font-bold text-[var(--fc-gold)]">24K ELECTROPLATE</span>
+      </div>
+      <div class="p-2 rounded bg-black/40 border border-[var(--fc-hairline)]">
+        <span class="block text-[10px] text-[var(--fc-mute)] uppercase">ENGRAVING</span>
+        <span class="font-bold text-[#f7f5f0]">HAND-CHISELED</span>
+      </div>
+    </div>
+    <p class="text-[11px] text-[var(--fc-mute)] pt-1 text-center">
+      Awarded exclusively to the Grand Champion of the FCForge Global Invitational Series.
+    </p>
+  </div>
+</div>
+
+<script>
+  import { ChampionshipTrophyScene } from './ChampionshipTrophyScene';
+
+  const container = document.getElementById('championship-trophy-wrapper');
+  const canvas = document.getElementById('championship-trophy-canvas') as HTMLCanvasElement;
+  const btnSpin = document.getElementById('btn-trophy-spin');
+  const btnFlare = document.getElementById('btn-trophy-flare');
+  const btnSpecs = document.getElementById('btn-trophy-specs-toggle');
+  const specsDrawer = document.getElementById('trophy-specs-drawer');
+
+  let scene: ChampionshipTrophyScene | null = null;
+
+  if (canvas && container) {
+    try {
+      scene = new ChampionshipTrophyScene({
+        canvas,
+        container,
+        onReady: () => {
+          console.log('[TROPHY 3D] Championship Trophy 3D ready on podium.');
+        }
+      });
+
+      // Interactive Spin Boost
+      btnSpin?.addEventListener('click', () => {
+        scene?.spinBoost();
+      });
+
+      // Interactive Flare & Screen Sparkles
+      btnFlare?.addEventListener('click', () => {
+        scene?.triggerCelebrationFlare();
+
+        // Spawn confetti celebration embers
+        const rect = btnFlare.getBoundingClientRect();
+        const startX = rect.left + rect.width / 2;
+        const startY = rect.top + rect.height / 2;
+
+        for (let i = 0; i < 30; i++) {
+          const particle = document.createElement('div');
+          particle.className = 'fixed pointer-events-none z-50 rounded-full bg-[var(--fc-gold)]';
+          const size = Math.random() * 6 + 3;
+          particle.style.width = `${size}px`;
+          particle.style.height = `${size}px`;
+          particle.style.left = `${startX}px`;
+          particle.style.top = `${startY}px`;
+          particle.style.boxShadow = '0 0 12px rgba(229,184,105,0.9)';
+          document.body.appendChild(particle);
+
+          const angle = Math.random() * Math.PI * 2;
+          const speed = Math.random() * 140 + 70;
+          const vx = Math.cos(angle) * speed;
+          const vy = Math.sin(angle) * speed - 60;
+
+          let startTime: number | null = null;
+          const duration = 1100;
+
+          const animate = (timestamp: number) => {
+            if (!startTime) startTime = timestamp;
+            const elapsed = timestamp - startTime;
+            const p = elapsed / duration;
+
+            if (p < 1) {
+              const cx = startX + vx * p;
+              const cy = startY + vy * p + 0.5 * 240 * p * p;
+              particle.style.left = `${cx}px`;
+              particle.style.top = `${cy}px`;
+              particle.style.opacity = `${1 - p}`;
+              requestAnimationFrame(animate);
+            } else {
+              particle.remove();
+            }
+          };
+
+          requestAnimationFrame(animate);
+        }
+      });
+
+      // Specs Drawer Toggle
+      btnSpecs?.addEventListener('click', () => {
+        if (specsDrawer) {
+          specsDrawer.classList.toggle('hidden');
+        }
+      });
+
+    } catch (err) {
+      console.error('[TROPHY 3D ERROR]', err);
+    }
+  }
+</script>

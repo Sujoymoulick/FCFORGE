@@ -1,0 +1,227 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { MOCK_PLAYERS, type PlayerProfile } from '../../data/mock/players';
+import UserAvatar from '../../components/auth/UserAvatar.astro';
+
+export function getStaticPaths() {
+  return MOCK_PLAYERS.map(player => ({
+    params: { username: player.username },
+    props: { player }
+  }));
+}
+
+interface Props {
+  player: PlayerProfile;
+}
+
+const { player } = Astro.props;
+---
+
+<Layout title={`${player.username} — FCForge Player Passport`}>
+  <div class="max-w-7xl mx-auto px-4 sm:px-8 py-10 space-y-8">
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 font-mono text-[11px] text-[var(--fc-mute)]">
+      <a href="/leaderboards" class="hover:text-[#f7f5f0] transition-colors">LEADERBOARDS</a>
+      <span>/</span>
+      <span class="text-[#f7f5f0]">{player.username}</span>
+    </div>
+
+    <!-- Profile Banner & Header (DESIGN.md) -->
+    <div class="rounded-[6px] overflow-hidden border border-[var(--fc-hairline)] bg-[var(--fc-canvas-soft)]">
+      <!-- Banner Image -->
+      <div class="h-44 sm:h-60 w-full relative overflow-hidden bg-[var(--fc-canvas)]">
+        <img src={player.banner} alt={player.username} class="w-full h-full object-cover opacity-50" />
+        <div class="absolute inset-0 bg-gradient-to-t from-[var(--fc-canvas-soft)] via-transparent to-transparent"></div>
+        <div class="absolute top-4 right-4 flex items-center gap-2">
+          <span class="px-2.5 py-1 text-[10px] font-mono rounded-[3px] bg-[var(--fc-canvas)]/90 backdrop-blur-md border border-[var(--fc-hairline)] text-[var(--fc-primary)]">
+            VERIFIED ATHLETE
+          </span>
+          <span class="px-2.5 py-1 text-[10px] font-mono rounded-[3px] bg-[var(--fc-canvas)]/90 backdrop-blur-md border border-[var(--fc-hairline)] text-[var(--fc-mute)]">
+            {player.primaryGame}
+          </span>
+        </div>
+      </div>
+
+      <!-- User Header Content -->
+      <div class="px-6 sm:px-8 pb-6 -mt-14 sm:-mt-18 relative z-10 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-5">
+        <div class="flex flex-col sm:flex-row items-start sm:items-end gap-5">
+          <div class="border-2 border-[var(--fc-hairline-bright)] rounded-full shadow-2xl p-0.5 bg-[var(--fc-canvas)]">
+            <UserAvatar src={player.avatar} name={player.displayName} size="lg" rank={player.rank} />
+          </div>
+
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <h1 class="font-display font-medium text-2xl sm:text-3xl text-[#f7f5f0] tracking-tight">{player.username}</h1>
+              <span class="text-[10px] font-mono font-medium px-2 py-0.5 rounded-[2px] bg-[var(--fc-canvas)] text-[var(--fc-primary)] border border-[var(--fc-hairline)]">
+                {player.countryCode} · {player.country}
+              </span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded-[2px] bg-[var(--fc-gold)]/10 text-[var(--fc-gold)] border border-[var(--fc-gold)]/30 font-medium">
+                TIER #{player.rank}
+              </span>
+            </div>
+            <p class="text-xs text-[var(--fc-body)] font-mono">
+              {player.displayName} · Global Roster ID: <span class="text-[var(--fc-mute)]">{player.id.toUpperCase()}</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Rating Box -->
+        <div class="bg-[var(--fc-canvas)] px-5 py-3 rounded-[4px] border border-[var(--fc-hairline)] text-right self-stretch sm:self-auto flex sm:flex-col justify-between items-center sm:items-end font-mono">
+          <span class="text-[10px] text-[var(--fc-mute)] uppercase tracking-wider">GLOBAL ELO RATING</span>
+          <div class="flex items-baseline gap-1.5 mt-0.5">
+            <span class="font-medium text-3xl text-[var(--fc-gold)]">{player.rating}</span>
+            <span class="text-xs text-[var(--fc-primary)]">PTS</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Grid (DESIGN.md card-mockup) -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="p-4 rounded-[4px] border border-[var(--fc-hairline)] bg-[var(--fc-canvas-soft)] font-mono">
+        <span class="text-[10px] text-[var(--fc-mute)] block uppercase tracking-wider">GLOBAL RANK</span>
+        <span class="font-medium text-2xl text-[#f7f5f0] block mt-1">#{player.rank}</span>
+        <span class="text-[11px] text-[var(--fc-mute)] block mt-0.5">Top 0.01% Worldwide</span>
+      </div>
+      <div class="p-4 rounded-[4px] border border-[var(--fc-hairline)] bg-[var(--fc-canvas-soft)] font-mono">
+        <span class="text-[10px] text-[var(--fc-mute)] block uppercase tracking-wider">WIN RATE</span>
+        <span class="font-medium text-2xl text-[var(--fc-gold)] block mt-1">{player.stats.winRate}%</span>
+        <span class="text-[11px] text-[var(--fc-mute)] block mt-0.5">{player.stats.wins}W - {player.stats.losses}L - {player.stats.draws}D</span>
+      </div>
+      <div class="p-4 rounded-[4px] border border-[var(--fc-hairline)] bg-[var(--fc-canvas-soft)] font-mono">
+        <span class="text-[10px] text-[var(--fc-mute)] block uppercase tracking-wider">TOURNAMENTS WON</span>
+        <span class="font-medium text-2xl text-[#f7f5f0] block mt-1">{player.stats.tournamentsWon}</span>
+        <span class="text-[11px] text-[var(--fc-mute)] block mt-0.5">of {player.stats.tournamentsPlayed} Entered</span>
+      </div>
+      <div class="p-4 rounded-[4px] border border-[var(--fc-hairline)] bg-[var(--fc-canvas-soft)] font-mono">
+        <span class="text-[10px] text-[var(--fc-mute)] block uppercase tracking-wider">PRIZE EARNINGS</span>
+        <span class="font-medium text-2xl text-[var(--fc-primary)] block mt-1">${player.stats.earningsUSD.toLocaleString()}</span>
+        <span class="text-[11px] text-[var(--fc-mute)] block mt-0.5">Verified Payouts</span>
+      </div>
+    </div>
+
+    <!-- Trophies & Badges & Recent Matches -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Recent Matches (2 cols on desktop) -->
+      <div class="lg:col-span-2 space-y-6">
+        <div class="p-5 rounded-[6px] border border-[var(--fc-hairline)] bg-[var(--fc-canvas-soft)] space-y-4">
+          <div class="flex items-center justify-between border-b border-[var(--fc-hairline)] pb-3">
+            <h3 class="font-display font-medium text-sm text-[#f7f5f0] tracking-tight">
+              Recent Competitive Matches
+            </h3>
+            <span class="font-mono text-[10px] text-[var(--fc-mute)]">TELEMETRY VERIFIED</span>
+          </div>
+
+          <div class="space-y-2.5">
+            {player.recentMatches && player.recentMatches.length > 0 ? (
+              player.recentMatches.map((match) => (
+                <div class="p-3 rounded-[4px] border border-[var(--fc-hairline)] bg-[var(--fc-canvas)] flex items-center justify-between gap-4 font-mono text-xs">
+                  <div class="flex items-center gap-3">
+                    <span class={`w-6 h-6 rounded-[2px] flex items-center justify-center font-bold text-[11px] ${
+                      match.result === 'W' ? 'bg-[var(--fc-primary)]/15 text-[var(--fc-primary)] border border-[var(--fc-primary)]/30' :
+                      match.result === 'L' ? 'bg-[#ff5555]/15 text-[#ff5555] border border-[#ff5555]/30' :
+                      'bg-[var(--fc-mute)]/15 text-[var(--fc-mute)] border border-[var(--fc-mute)]/30'
+                    }`}>
+                      {match.result}
+                    </span>
+                    <div>
+                      <div class="text-[#f7f5f0] font-medium">{match.tournamentName}</div>
+                      <div class="text-[10px] text-[var(--fc-mute)]">vs {match.opponent} · {match.date}</div>
+                    </div>
+                  </div>
+
+                  <div class="text-right">
+                    <span class="font-display font-medium text-sm text-[#f7f5f0] px-2 py-0.5 rounded-[2px] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)]">
+                      {match.score}
+                    </span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div class="text-xs font-mono text-[var(--fc-mute)] py-4 text-center">
+                No recent public matches logged for this season.
+              </div>
+            )}
+          </div>
+        </div>
+
+        <!-- Trophy Showcase -->
+        <div class="p-5 rounded-[6px] border border-[var(--fc-hairline)] bg-[var(--fc-canvas-soft)] space-y-4">
+          <div class="flex items-center justify-between border-b border-[var(--fc-hairline)] pb-3">
+            <h3 class="font-display font-medium text-sm text-[#f7f5f0] tracking-tight">
+              Trophy Cabinet
+            </h3>
+            <span class="font-mono text-[10px] text-[var(--fc-mute)]">OFFICIAL PODIUMS</span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-4 font-mono">
+            <div class="p-4 rounded-[4px] border border-[var(--fc-hairline)] bg-[var(--fc-canvas)] text-center">
+              <span class="text-2xl block mb-1">🥇</span>
+              <span class="text-[10px] text-[var(--fc-mute)] uppercase block">1ST PLACE</span>
+              <span class="font-medium text-2xl text-[var(--fc-gold)] block mt-1">{player.trophies.gold}</span>
+            </div>
+            <div class="p-4 rounded-[4px] border border-[var(--fc-hairline)] bg-[var(--fc-canvas)] text-center">
+              <span class="text-2xl block mb-1">🥈</span>
+              <span class="text-[10px] text-[var(--fc-mute)] uppercase block">2ND PLACE</span>
+              <span class="font-medium text-2xl text-[#f7f5f0] block mt-1">{player.trophies.silver}</span>
+            </div>
+            <div class="p-4 rounded-[4px] border border-[var(--fc-hairline)] bg-[var(--fc-canvas)] text-center">
+              <span class="text-2xl block mb-1">🥉</span>
+              <span class="text-[10px] text-[var(--fc-mute)] uppercase block">3RD PLACE</span>
+              <span class="font-medium text-2xl text-[#cd7f32] block mt-1">{player.trophies.bronze}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Badges & Accreditation -->
+      <div class="space-y-6">
+        <div class="p-5 rounded-[6px] border border-[var(--fc-hairline)] bg-[var(--fc-canvas-soft)] space-y-4">
+          <div class="flex items-center justify-between border-b border-[var(--fc-hairline)] pb-3">
+            <h3 class="font-display font-medium text-sm text-[#f7f5f0] tracking-tight">
+              Badges & Accolades
+            </h3>
+            <span class="font-mono text-[10px] text-[var(--fc-mute)]">{player.badges.length} EARNED</span>
+          </div>
+
+          <div class="space-y-3">
+            {player.badges.map((badge) => (
+              <div class="p-3 rounded-[4px] bg-[var(--fc-canvas)] border border-[var(--fc-hairline)] flex items-start gap-3">
+                <div class={`w-7 h-7 rounded-[3px] flex items-center justify-center text-xs shrink-0 font-mono font-bold ${
+                  badge.tier === 'legendary' ? 'bg-[var(--fc-gold)]/20 text-[var(--fc-gold)] border border-[var(--fc-gold)]/40' :
+                  badge.tier === 'epic' ? 'bg-[var(--fc-primary)]/20 text-[var(--fc-primary)] border border-[var(--fc-primary)]/40' :
+                  'bg-[var(--fc-hairline)] text-[#f7f5f0]'
+                }`}>
+                  {badge.tier === 'legendary' ? '★' : badge.tier === 'epic' ? '◆' : '●'}
+                </div>
+                <div class="space-y-0.5">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-medium text-[#f7f5f0]">{badge.title}</span>
+                    <span class="text-[9px] font-mono uppercase px-1 py-0.2 rounded-[2px] bg-[var(--fc-canvas-soft)] text-[var(--fc-mute)] border border-[var(--fc-hairline)]">
+                      {badge.tier}
+                    </span>
+                  </div>
+                  <p class="text-[11px] text-[var(--fc-body)] leading-relaxed">
+                    {badge.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <!-- Quick Challenge Card -->
+        <div class="p-5 rounded-[6px] border border-[var(--fc-hairline)] bg-gradient-to-b from-[var(--fc-canvas-soft)] to-[var(--fc-canvas)] space-y-4 font-mono">
+          <div class="space-y-1">
+            <span class="text-[10px] text-[var(--fc-mute)] uppercase">CHALLENGE ATHLETE</span>
+            <h4 class="font-display font-medium text-base text-[#f7f5f0]">Scrimmage & Wager</h4>
+            <p class="text-xs text-[var(--fc-body)]">Direct invite to private lobby under FCForge ruleset.</p>
+          </div>
+          <button class="w-full py-2.5 rounded-[4px] bg-[var(--fc-primary)] text-[var(--fc-canvas)] font-mono font-medium text-xs hover:bg-[#86e680] transition-colors">
+            ISSUE SCRIM CHALLENGE
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

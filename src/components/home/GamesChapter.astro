@@ -1,0 +1,100 @@
+---
+import { MOCK_GAMES } from '../../data/mock/games';
+---
+
+<section id="chapter-games" class="relative min-h-[85dvh] flex flex-col justify-center px-4 sm:px-8 py-20 sm:py-28">
+  <div class="max-w-6xl mx-auto w-full relative z-20 space-y-10">
+    <!-- Chapter Header (DESIGN.md) -->
+    <div class="text-center space-y-3 max-w-2xl mx-auto">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-[4px] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)] shadow-xs">
+        <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-gold)]"></span>
+        <span class="text-[11px] font-mono font-medium tracking-tight text-[var(--fc-primary)] uppercase">
+          CHAPTER 03 // GAME SELECTION
+        </span>
+      </div>
+      <h2 class="font-display text-3xl sm:text-5xl font-normal tracking-[-0.03em] text-[#f7f5f0]">
+        Choose your <span class="font-serif-italic text-[var(--fc-gold)] text-4xl sm:text-6xl">battle.</span>
+      </h2>
+      <p class="text-sm text-[var(--fc-body)] font-normal max-w-xl mx-auto">
+        Select your arena. FCForge powers dedicated competitive ladders and official bracket tournaments for the world's leading mobile football simulations.
+      </p>
+    </div>
+
+    <!-- Warp Cards Grid (card-content) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+      {MOCK_GAMES.map((game, idx) => (
+        <div
+          class="game-tilt-card p-6 sm:p-7 rounded-[6px] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)] hover:border-[var(--fc-hairline-bright)] flex flex-col justify-between h-full space-y-6 transition-all duration-300 group"
+          data-index={idx}
+        >
+          <!-- Top Publisher Badge & Live Count (DM Mono) -->
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-mono font-medium tracking-wider px-2.5 py-0.5 rounded-[3px] bg-[var(--fc-canvas)] border border-[var(--fc-hairline)] text-[var(--fc-primary)]">
+              {game.publisher}
+            </span>
+            <span class="text-[10px] font-mono font-medium px-2.5 py-0.5 rounded-[3px] bg-[var(--fc-canvas)] text-[var(--fc-gold)] border border-[var(--fc-hairline)] flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-gold)]"></span>
+              {game.activeTournamentsCount} TOURNAMENTS LIVE
+            </span>
+          </div>
+
+          <!-- Game Title & Description -->
+          <div class="space-y-2">
+            <h3 class="font-display font-medium text-2xl sm:text-3xl text-[#f7f5f0] tracking-tight group-hover:text-[var(--fc-gold)] transition-colors">
+              {game.name}
+            </h3>
+            <p class="text-xs sm:text-sm text-[var(--fc-body)] leading-relaxed font-normal">
+              {game.description}
+            </p>
+          </div>
+
+          <!-- Features Tags (DM Mono) -->
+          <div class="flex flex-wrap gap-2 text-[10px] font-mono">
+            <span class="px-2 py-0.5 rounded-[3px] bg-[var(--fc-canvas)] text-[var(--fc-body)] border border-[var(--fc-hairline)]">RANKED LADDERS</span>
+            <span class="px-2 py-0.5 rounded-[3px] bg-[var(--fc-canvas)] text-[var(--fc-body)] border border-[var(--fc-hairline)]">CASH POOLS</span>
+            <span class="px-2 py-0.5 rounded-[3px] bg-[var(--fc-canvas)] text-[var(--fc-gold)] border border-[var(--fc-hairline)]">SEASON FINALS</span>
+          </div>
+
+          <!-- Action Footer (DESIGN.md button-primary & text-sm) -->
+          <div class="pt-4 border-t border-[var(--fc-hairline)] flex items-center justify-between mt-auto">
+            <span class="text-xs font-mono uppercase text-[var(--fc-body)] font-medium flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-primary)]"></span>
+              {game.platform} ARENA
+            </span>
+            <a href={`/tournaments?game=${game.id}`} class="btn-warp-primary text-xs py-1.5 px-3">
+              <span>Enter arena</span>
+              <span class="font-mono text-xs">→</span>
+            </a>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<script>
+  // Subtle card hover tilt
+  const cards = document.querySelectorAll('.game-tilt-card');
+  const isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (!isReducedMotion && window.innerWidth >= 768) {
+    cards.forEach(card => {
+      card.addEventListener('mousemove', (e: any) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+
+        const rotateX = (y - centerY) / -30;
+        const rotateY = (x - centerX) / 30;
+
+        (card as HTMLElement).style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-2px)`;
+      });
+
+      card.addEventListener('mouseleave', () => {
+        (card as HTMLElement).style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
+      });
+    });
+  }
+</script>

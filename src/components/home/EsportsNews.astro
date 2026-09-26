@@ -1,0 +1,91 @@
+---
+const newsItems = [
+  {
+    id: 'n1',
+    title: 'FCForge Global Cup Season 4 Grand Finals Broadcast Announced',
+    category: 'TOURNAMENT NEWS',
+    date: 'SEP 26, 2026',
+    readTime: '3 MIN READ',
+    image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80',
+    snippet: 'Watch live as top mobile competitors battle for the $15,000 prize pool on official FCForge broadcast streams.'
+  },
+  {
+    id: 'n2',
+    title: 'eFootball 2026 Mobile Competitive Meta Analysis & Roster Limits',
+    category: 'META GUIDE',
+    date: 'SEP 24, 2026',
+    readTime: '5 MIN READ',
+    image: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=800&q=80',
+    snippet: 'Detailed breakdown of overall rating limits, formation counters, and penalty shootout strategies.'
+  },
+  {
+    id: 'n3',
+    title: 'EA SPORTS FC Mobile Season 4 League Division Signups Open',
+    category: 'COMMUNITY',
+    date: 'SEP 22, 2026',
+    readTime: '4 MIN READ',
+    image: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=800&q=80',
+    snippet: 'Register your squad for upcoming Regional Divisions. Compete for ELO ladder placement and cash payouts.'
+  }
+];
+---
+
+<section id="chapter-news" class="relative py-8">
+  <div class="space-y-6">
+    <!-- Header (DESIGN.md) -->
+    <div class="flex items-center justify-between border-b border-[var(--fc-hairline)] pb-4">
+      <div class="space-y-1">
+        <span class="text-[10px] font-mono text-[var(--fc-gold)] uppercase tracking-wider block">
+          DISPATCHES & COVERAGE
+        </span>
+        <h3 class="font-display font-medium text-xl sm:text-2xl text-[#f7f5f0] tracking-tight">
+          Tournament <span class="font-serif-italic text-[var(--fc-gold)] text-2xl sm:text-3xl">news.</span>
+        </h3>
+      </div>
+      <a href="/tournaments" class="btn-warp-secondary text-xs py-1.5 px-3 group">
+        <span>All dispatches</span>
+        <span class="font-mono text-xs group-hover:translate-x-0.5 transition-transform">→</span>
+      </a>
+    </div>
+
+    <!-- News Grid (DESIGN.md card-content) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+      {newsItems.map(item => (
+        <a href="/tournaments" class="p-4 rounded-[6px] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)] hover:border-[var(--fc-hairline-bright)] flex flex-col justify-between group transition-all duration-200">
+          <div class="space-y-3">
+            <!-- Article Image Cover -->
+            <div class="relative h-40 w-full overflow-hidden rounded-[4px] bg-[var(--fc-canvas)] border border-[var(--fc-hairline)]">
+              <img
+                src={item.image}
+                alt={item.title}
+                class="w-full h-full object-cover group-hover:scale-103 transition-transform duration-300 opacity-85 group-hover:opacity-100"
+                loading="lazy"
+              />
+              <div class="absolute top-2 left-2">
+                <span class="text-[9px] font-mono font-medium px-2 py-0.5 rounded-[2px] bg-[var(--fc-canvas)]/90 text-[#f7f5f0] border border-[var(--fc-hairline)]">
+                  {item.category}
+                </span>
+              </div>
+            </div>
+
+            <!-- Content -->
+            <div class="space-y-1.5">
+              <h4 class="font-display font-medium text-sm text-[#f7f5f0] group-hover:text-[var(--fc-gold)] transition-colors line-clamp-2 tracking-tight">
+                {item.title}
+              </h4>
+              <p class="text-xs text-[var(--fc-body)] line-clamp-2 leading-relaxed font-normal">
+                {item.snippet}
+              </p>
+            </div>
+          </div>
+
+          <!-- Footer Metadata (DM Mono) -->
+          <div class="pt-3 border-t border-[var(--fc-hairline)] flex items-center justify-between text-[10px] font-mono text-[var(--fc-mute)] mt-3">
+            <span>{item.date}</span>
+            <span>{item.readTime}</span>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>

@@ -1,0 +1,72 @@
+---
+import UserMenu from '../auth/UserMenu.astro';
+
+const currentPath = Astro.url.pathname;
+
+const navItems = [
+  { name: 'Home', href: '/' },
+  { name: 'Tournaments', href: '/tournaments' },
+  { name: 'Leaderboards', href: '/leaderboards' },
+  { name: 'Profile', href: '/profile/Kagami_FC' },
+  { name: 'Dashboard', href: '/dashboard' },
+];
+---
+
+<!-- Warp-Inspired Top Navigation Bar (DESIGN.md nav-bar) -->
+<header id="fc-navbar" class="fixed top-3 left-0 right-0 z-50 px-4 transition-all duration-300">
+  <div class="max-w-6xl mx-auto flex items-center justify-between px-3.5 py-2 rounded-lg border border-[var(--fc-hairline)] bg-[var(--fc-canvas)]/90 backdrop-blur-xl shadow-lg shadow-black/40">
+    
+    <!-- Brand Wordmark -->
+    <a href="/" class="flex items-center gap-2.5 pl-1.5 pr-2 group">
+      <div class="w-7 h-7 rounded-[4px] bg-[#f7f5f0] flex items-center justify-center text-[#161311] font-display font-black text-xs tracking-tighter">
+        FC
+      </div>
+      <span class="font-display font-medium text-sm tracking-tight text-[#f7f5f0] flex items-center gap-1.5">
+        FCForge <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-gold)] inline-block"></span>
+      </span>
+    </a>
+
+    <!-- Desktop Navigation Items (DESIGN.md nav-link) -->
+    <nav class="hidden md:flex items-center gap-1 bg-[var(--fc-canvas-soft)]/60 px-1.5 py-1 rounded-[4px] border border-[var(--fc-hairline)]">
+      {navItems.map(item => {
+        const isActive = currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href));
+        return (
+          <a
+            href={item.href}
+            class={`px-3 py-1 text-xs font-medium font-sans tracking-tight rounded-[3px] transition-all duration-200 ${
+              isActive
+                ? 'bg-[#f7f5f0] text-[#161311] shadow-xs'
+                : 'text-[var(--fc-body)] hover:text-[#f7f5f0] hover:bg-[var(--fc-canvas-subtle)]'
+            }`}
+          >
+            {item.name}
+          </a>
+        );
+      })}
+    </nav>
+
+    <!-- User Menu & Auth -->
+    <div class="flex items-center gap-2 pr-1">
+      <UserMenu />
+    </div>
+  </div>
+</header>
+
+<!-- Mobile Floating Nav Bar -->
+<nav class="md:hidden fixed bottom-3 left-3 right-3 z-50 bg-[var(--fc-canvas)]/95 border border-[var(--fc-hairline)] backdrop-blur-2xl rounded-lg px-2 py-1.5 shadow-2xl">
+  <div class="flex items-center justify-around">
+    {navItems.map(item => {
+      const isActive = currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href));
+      return (
+        <a
+          href={item.href}
+          class={`flex flex-col items-center gap-0.5 px-2.5 py-1 rounded-[4px] text-[11px] font-medium tracking-tight transition-colors ${
+            isActive ? 'text-[#f7f5f0] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)]' : 'text-[var(--fc-mute)] hover:text-[#f7f5f0]'
+          }`}
+        >
+          <span>{item.name}</span>
+        </a>
+      );
+    })}
+  </div>
+</nav>

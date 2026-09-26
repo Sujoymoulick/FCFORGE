@@ -1,0 +1,160 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getAuthUser } from '../lib/auth';
+
+const user = getAuthUser();
+---
+
+<Layout title="Player Dashboard — FCForge Esports">
+  <div class="max-w-7xl mx-auto px-4 sm:px-8 py-10 space-y-8">
+    <!-- Dashboard Welcome Header (DESIGN.md) -->
+    <div class="p-6 sm:p-7 rounded-[6px] border border-[var(--fc-hairline)] bg-[var(--fc-canvas-soft)] relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div class="relative z-10 space-y-2">
+        <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-[3px] bg-[var(--fc-canvas)] border border-[var(--fc-hairline)]">
+          <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-gold)]"></span>
+          <span class="text-[10px] font-mono text-[var(--fc-gold)] uppercase tracking-wider">PASSPORT VERIFIED</span>
+        </div>
+        <h1 class="font-display font-normal text-3xl sm:text-4xl text-[#f7f5f0] tracking-[-0.03em]">
+          Welcome back, <span class="font-serif-italic text-[var(--fc-gold)] text-4xl sm:text-5xl">{user?.username}</span>
+        </h1>
+        <p class="text-xs text-[var(--fc-body)] font-mono">
+          Global Rank: <strong class="text-[#f7f5f0]">#{user?.rank}</strong> · ELO: <strong class="text-[var(--fc-gold)]">{user?.rating} Points</strong> · Division: Legends I
+        </p>
+      </div>
+
+      <div class="relative z-10 flex items-center gap-3">
+        <a href="/tournaments" class="btn-warp-primary text-xs py-2 px-4">
+          <span>Find next match</span>
+          <span class="font-mono text-xs">→</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Overview Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Left 2 Columns: Scheduled Match & Registered Brackets -->
+      <div class="md:col-span-2 space-y-6">
+        <!-- Upcoming Match Alert (DESIGN.md card-mockup) -->
+        <div class="p-5 rounded-[6px] border border-[var(--fc-hairline)] bg-[var(--fc-canvas-soft)] space-y-4">
+          <div class="flex items-center justify-between border-b border-[var(--fc-hairline)] pb-3">
+            <span class="text-xs font-mono text-[#f7f5f0] uppercase flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-gold)]"></span>
+              UPCOMING SCHEDULED MATCH
+            </span>
+            <span class="text-[10px] font-mono text-[var(--fc-mute)]">TODAY 18:00 UTC</span>
+          </div>
+
+          <div class="p-4 rounded-[4px] bg-[var(--fc-canvas)] border border-[var(--fc-hairline)] flex items-center justify-between text-xs sm:text-sm font-mono">
+            <div class="flex items-center gap-2 font-medium text-[#f7f5f0]">
+              <span class="w-2 h-2 rounded-[1px] bg-[var(--fc-gold)]"></span>
+              <span>Kagami_FC (You)</span>
+            </div>
+            <span class="text-[10px] text-[var(--fc-mute)]">VS</span>
+            <div class="flex items-center gap-2 font-medium text-[#f7f5f0]">
+              <span>ElMatador_9</span>
+              <span class="w-2 h-2 rounded-[1px] bg-red-400"></span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-xs font-mono text-[var(--fc-mute)]">
+            <span>Stage: Quarterfinals — FCForge Global Cup</span>
+            <span class="text-[var(--fc-gold)] font-medium">SERVER: LATENCY 14ms (OPTIMAL)</span>
+          </div>
+        </div>
+
+        <!-- Registered Brackets Table (DESIGN.md ex-data-table-cell) -->
+        <div class="rounded-[6px] border border-[var(--fc-hairline)] bg-[var(--fc-canvas-soft)] overflow-hidden">
+          <div class="px-5 py-3 border-b border-[var(--fc-hairline)] flex items-center justify-between">
+            <h3 class="font-display font-medium text-sm text-[#f7f5f0] tracking-tight">Active Registrations</h3>
+            <span class="text-[10px] font-mono text-[var(--fc-mute)]">2 ACTIVE BRACKETS</span>
+          </div>
+
+          <div class="divide-y divide-[var(--fc-hairline)]">
+            <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+              <div>
+                <span class="font-sans font-medium text-sm text-[#f7f5f0] block">FCForge Global Cup Season 4</span>
+                <span class="text-[10px] text-[var(--fc-mute)] block mt-0.5">eFootball™ Mobile · Seed #01</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-[10px] px-2 py-0.5 rounded-[2px] bg-[var(--fc-gold)]/10 text-[var(--fc-gold)] border border-[var(--fc-gold)]/20">
+                  IN QUARTERFINALS
+                </span>
+                <a href="/tournaments/fcforge-global-cup-season-4" class="btn-warp-secondary text-xs py-1 px-2.5">
+                  Lobby
+                </a>
+              </div>
+            </div>
+
+            <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+              <div>
+                <span class="font-sans font-medium text-sm text-[#f7f5f0] block">EA FC Mobile Masters Open Qualifier</span>
+                <span class="text-[10px] text-[var(--fc-mute)] block mt-0.5">EA SPORTS FC™ Mobile · Seed #04</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-[10px] px-2 py-0.5 rounded-[2px] bg-[var(--fc-canvas)] text-[var(--fc-body)] border border-[var(--fc-hairline)]">
+                  STARTS OCT 02
+                </span>
+                <a href="/tournaments/ea-fc-mobile-masters-open" class="btn-warp-secondary text-xs py-1 px-2.5">
+                  Details
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Performance Passport & Match Log -->
+      <div class="space-y-6">
+        <!-- Passport Specs (DESIGN.md card-content) -->
+        <div class="p-5 rounded-[6px] border border-[var(--fc-hairline)] bg-[var(--fc-canvas-soft)] space-y-4">
+          <div class="flex items-center justify-between border-b border-[var(--fc-hairline)] pb-3">
+            <span class="text-xs font-mono text-[var(--fc-mute)] uppercase">COMPETITOR PASSPORT</span>
+            <span class="text-[10px] font-mono text-[var(--fc-gold)] font-medium">TIER: LEGENDS</span>
+          </div>
+
+          <div class="space-y-2 text-xs font-mono">
+            <div class="flex justify-between py-1 border-b border-[var(--fc-hairline)]">
+              <span class="text-[var(--fc-mute)]">WIN RATE</span>
+              <span class="text-[#f7f5f0] font-medium">{user?.stats?.winRate || '88.5%'}</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-[var(--fc-hairline)]">
+              <span class="text-[var(--fc-mute)]">TOTAL MATCHES</span>
+              <span class="text-[#f7f5f0] font-medium">{user?.stats?.matchesPlayed || 142}</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-[var(--fc-hairline)]">
+              <span class="text-[var(--fc-mute)]">TOTAL EARNINGS</span>
+              <span class="text-[var(--fc-gold)] font-medium">{user?.stats?.earnings || '$12,400'}</span>
+            </div>
+            <div class="flex justify-between py-1">
+              <span class="text-[var(--fc-mute)]">FAIR PLAY RATING</span>
+              <span class="text-[#f7f5f0] font-medium">100 / 100</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Results -->
+        <div class="p-5 rounded-[6px] border border-[var(--fc-hairline)] bg-[var(--fc-canvas-soft)] space-y-3">
+          <span class="text-xs font-mono text-[var(--fc-mute)] uppercase block border-b border-[var(--fc-hairline)] pb-2">
+            RECENT COMPETITIVE RESULTS
+          </span>
+          <div class="space-y-2 font-mono text-xs">
+            <div class="flex items-center justify-between p-2 rounded-[4px] bg-[var(--fc-canvas)] border border-[var(--fc-hairline)]">
+              <div>
+                <span class="text-[#f7f5f0] block">vs NexusStrike</span>
+                <span class="text-[10px] text-[var(--fc-mute)]">Round of 16</span>
+              </div>
+              <span class="text-[var(--fc-gold)] font-medium">3 - 1 WIN</span>
+            </div>
+            <div class="flex items-center justify-between p-2 rounded-[4px] bg-[var(--fc-canvas)] border border-[var(--fc-hairline)]">
+              <div>
+                <span class="text-[#f7f5f0] block">vs StrikerKing</span>
+                <span class="text-[10px] text-[var(--fc-mute)]">Round of 32</span>
+              </div>
+              <span class="text-[var(--fc-gold)] font-medium">2 - 0 WIN</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

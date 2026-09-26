@@ -1,0 +1,186 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { MOCK_TOURNAMENTS } from '../../data/mock/tournaments';
+
+const statusBadgeColors: Record<string, string> = {
+  'LIVE': 'bg-red-500/10 text-red-300 border-red-500/30',
+  'REGISTRATION OPEN': 'bg-[var(--fc-gold)]/10 text-[var(--fc-gold)] border-[var(--fc-gold)]/30',
+  'UPCOMING': 'bg-[var(--fc-canvas)] text-[var(--fc-primary)] border-[var(--fc-hairline)]',
+  'COMPLETED': 'bg-[var(--fc-canvas)] text-[var(--fc-mute)] border-[var(--fc-hairline)]'
+};
+---
+
+<Layout title="Tournaments Directory — FCForge Football Esports">
+  <div class="max-w-7xl mx-auto px-4 sm:px-8 py-10 space-y-8">
+    <!-- Header Title (DESIGN.md) -->
+    <div class="space-y-3">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-[4px] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)]">
+        <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-gold)]"></span>
+        <span class="text-[11px] font-mono font-medium tracking-tight text-[var(--fc-primary)] uppercase">
+          COMPETITIVE DIRECTORY
+        </span>
+      </div>
+      <h1 class="font-display font-normal text-4xl sm:text-5xl text-[#f7f5f0] tracking-[-0.035em]">
+        Mobile football <span class="font-serif-italic text-[var(--fc-gold)] text-5xl sm:text-6xl">tournaments.</span>
+      </h1>
+      <p class="text-sm text-[var(--fc-body)] max-w-2xl leading-relaxed">
+        Official global and regional brackets for eFootball™ Mobile and EA SPORTS FC™ Mobile. Filter by status, platform, or game.
+      </p>
+    </div>
+
+    <!-- Filters & Search Controls (DESIGN.md text-input) -->
+    <div class="p-4 sm:p-5 rounded-[6px] border border-[var(--fc-hairline)] bg-[var(--fc-canvas-soft)] space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <!-- Search Input -->
+        <div>
+          <label class="block text-[10px] font-mono text-[var(--fc-mute)] uppercase mb-1">SEARCH TOURNAMENT</label>
+          <input
+            type="text"
+            id="search-input"
+            placeholder="Search title, region, prize..."
+            class="w-full bg-[var(--fc-canvas)] border border-[var(--fc-hairline)] rounded-[4px] px-3 py-1.5 text-xs text-[#f7f5f0] placeholder-[var(--fc-mute)] focus:outline-none focus:border-[var(--fc-gold)]"
+          />
+        </div>
+
+        <!-- Game Filter -->
+        <div>
+          <label class="block text-[10px] font-mono text-[var(--fc-mute)] uppercase mb-1">COMPETITIVE GAME</label>
+          <select id="game-filter" class="w-full bg-[var(--fc-canvas)] border border-[var(--fc-hairline)] rounded-[4px] px-3 py-1.5 text-xs text-[#f7f5f0] focus:outline-none focus:border-[var(--fc-gold)]">
+            <option value="ALL">All Games</option>
+            <option value="efootball-mobile">eFootball™ Mobile</option>
+            <option value="eafc-mobile">EA SPORTS FC™ Mobile</option>
+          </select>
+        </div>
+
+        <!-- Status Filter -->
+        <div>
+          <label class="block text-[10px] font-mono text-[var(--fc-mute)] uppercase mb-1">STATUS</label>
+          <select id="status-filter" class="w-full bg-[var(--fc-canvas)] border border-[var(--fc-hairline)] rounded-[4px] px-3 py-1.5 text-xs text-[#f7f5f0] focus:outline-none focus:border-[var(--fc-gold)]">
+            <option value="ALL">All Statuses</option>
+            <option value="LIVE">Live Now</option>
+            <option value="REGISTRATION OPEN">Registration Open</option>
+            <option value="UPCOMING">Upcoming</option>
+            <option value="COMPLETED">Completed</option>
+          </select>
+        </div>
+
+        <!-- Region Filter -->
+        <div>
+          <label class="block text-[10px] font-mono text-[var(--fc-mute)] uppercase mb-1">REGION</label>
+          <select id="region-filter" class="w-full bg-[var(--fc-canvas)] border border-[var(--fc-hairline)] rounded-[4px] px-3 py-1.5 text-xs text-[#f7f5f0] focus:outline-none focus:border-[var(--fc-gold)]">
+            <option value="ALL">All Regions</option>
+            <option value="Global">Global</option>
+            <option value="APAC">APAC</option>
+            <option value="Europe">Europe</option>
+            <option value="LATAM">LATAM</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tournament Cards Grid (DESIGN.md card-mockup) -->
+    <div id="tournaments-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {MOCK_TOURNAMENTS.map(t => (
+        <div 
+          class="tournament-card rounded-[6px] p-5 flex flex-col justify-between group border border-[var(--fc-hairline)] bg-[var(--fc-canvas-soft)] hover:border-[var(--fc-hairline-bright)] transition-all duration-200"
+          data-title={t.title.toLowerCase()}
+          data-game={t.gameId}
+          data-status={t.status}
+          data-region={t.region}
+        >
+          <!-- Card Top Header -->
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono text-[var(--fc-primary)] uppercase tracking-wider px-2 py-0.5 rounded-[3px] bg-[var(--fc-canvas)] border border-[var(--fc-hairline)]">
+              {t.gameTitle}
+            </span>
+            <span class={`text-[9px] font-mono font-medium px-2 py-0.5 rounded-[3px] border uppercase flex items-center gap-1.5 ${statusBadgeColors[t.status] || ''}`}>
+              {t.status === 'LIVE' && <span class="w-1 h-1 rounded-full bg-red-400"></span>}
+              {t.status}
+            </span>
+          </div>
+
+          <!-- Title & Description -->
+          <div class="space-y-1.5 mb-4">
+            <h3 class="font-display font-medium text-base sm:text-lg text-[#f7f5f0] group-hover:text-[var(--fc-gold)] transition-colors line-clamp-1 tracking-tight">
+              {t.title}
+            </h3>
+            <p class="text-xs text-[var(--fc-body)] line-clamp-2 leading-relaxed">
+              {t.description}
+            </p>
+          </div>
+
+          <!-- Specs (DM Mono) -->
+          <div class="grid grid-cols-2 gap-2 py-2.5 border-t border-b border-[var(--fc-hairline)] mb-4 text-[10px] font-mono">
+            <div>
+              <span class="text-[var(--fc-mute)] block">PRIZE POOL</span>
+              <span class="text-[var(--fc-gold)] font-medium text-xs block">{t.prizePool}</span>
+            </div>
+            <div class="text-right">
+              <span class="text-[var(--fc-mute)] block">SLOTS</span>
+              <span class="text-[#f7f5f0] font-medium text-xs block">{t.currentParticipants} / {t.maxParticipants}</span>
+            </div>
+            <div>
+              <span class="text-[var(--fc-mute)] block">REGION</span>
+              <span class="text-[var(--fc-body)] block">{t.region}</span>
+            </div>
+            <div class="text-right">
+              <span class="text-[var(--fc-mute)] block">STARTS</span>
+              <span class="text-[var(--fc-body)] block">{t.startDate}</span>
+            </div>
+          </div>
+
+          <!-- Card Actions (button-primary & button-secondary-ghost) -->
+          <div class="flex items-center gap-2">
+            <a href={`/tournaments/${t.slug}`} class="btn-warp-primary flex-1 text-center justify-center text-xs py-1.5">
+              <span>View Bracket</span>
+            </a>
+            {t.status === 'REGISTRATION OPEN' && (
+              <button class="btn-warp-secondary text-xs py-1.5 px-3">
+                Register
+              </button>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</Layout>
+
+<script>
+  const searchInput = document.getElementById('search-input') as HTMLInputElement;
+  const gameFilter = document.getElementById('game-filter') as HTMLSelectElement;
+  const statusFilter = document.getElementById('status-filter') as HTMLSelectElement;
+  const regionFilter = document.getElementById('region-filter') as HTMLSelectElement;
+  const cards = document.querySelectorAll('.tournament-card');
+
+  function applyFilters() {
+    const q = searchInput?.value.toLowerCase() || '';
+    const g = gameFilter?.value || 'ALL';
+    const s = statusFilter?.value || 'ALL';
+    const r = regionFilter?.value || 'ALL';
+
+    cards.forEach(card => {
+      const el = card as HTMLElement;
+      const title = el.dataset.title || '';
+      const game = el.dataset.game || '';
+      const status = el.dataset.status || '';
+      const region = el.dataset.region || '';
+
+      const matchQ = !q || title.includes(q) || region.toLowerCase().includes(q);
+      const matchG = g === 'ALL' || game === g;
+      const matchS = s === 'ALL' || status === s;
+      const matchR = r === 'ALL' || region === r;
+
+      if (matchQ && matchG && matchS && matchR) {
+        el.style.display = 'flex';
+      } else {
+        el.style.display = 'none';
+      }
+    });
+  }
+
+  searchInput?.addEventListener('input', applyFilters);
+  gameFilter?.addEventListener('change', applyFilters);
+  statusFilter?.addEventListener('change', applyFilters);
+  regionFilter?.addEventListener('change', applyFilters);
+</script>

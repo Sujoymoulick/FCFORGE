@@ -1,0 +1,101 @@
+---
+import { MOCK_LEADERBOARD } from '../../data/mock/leaderboard';
+import UserAvatar from '../auth/UserAvatar.astro';
+---
+
+<section id="chapter-leaderboard" class="relative min-h-[90dvh] flex flex-col justify-center px-4 sm:px-8 py-20 sm:py-28">
+  <div class="max-w-6xl mx-auto w-full relative z-20 space-y-10">
+    <!-- Chapter Header (DESIGN.md) -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[var(--fc-hairline)] pb-6">
+      <div class="space-y-3">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-[4px] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)] shadow-xs">
+          <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-gold)]"></span>
+          <span class="text-[11px] font-mono font-medium tracking-tight text-[var(--fc-primary)] uppercase">
+            CHAPTER 06 // GLOBAL RANKING
+          </span>
+        </div>
+        <h2 class="font-display text-3xl sm:text-5xl font-normal tracking-[-0.03em] text-[#f7f5f0]">
+          Global <span class="font-serif-italic text-[var(--fc-gold)] text-4xl sm:text-6xl">rankings.</span>
+        </h2>
+      </div>
+
+      <a href="/leaderboards" class="btn-warp-secondary text-xs py-1.5 px-3.5 self-start md:self-auto group">
+        <span>Explore full ladder</span>
+        <span class="font-mono text-xs group-hover:translate-x-0.5 transition-transform">→</span>
+      </a>
+    </div>
+
+    <!-- Warp Data Table Container (ex-data-table-cell & card-mockup) -->
+    <div class="rounded-[6px] border border-[var(--fc-hairline)] bg-[var(--fc-canvas-soft)] overflow-hidden shadow-xl">
+      <!-- Broadcast Telemetry Header -->
+      <div class="px-5 py-3 bg-[var(--fc-canvas)] border-b border-[var(--fc-hairline)] flex items-center justify-between text-xs font-mono">
+        <div class="flex items-center gap-2">
+          <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-gold)]"></span>
+          <span class="text-[#f7f5f0] font-medium uppercase tracking-tight text-[11px]">SEASON 4 CIRCUIT // VERIFIED RATINGS</span>
+        </div>
+        <span class="text-[var(--fc-mute)] text-[10px] hidden sm:inline">UPDATED REALTIME</span>
+      </div>
+
+      <!-- Table Column Headers -->
+      <div class="grid grid-cols-12 gap-2 px-5 py-2.5 bg-[var(--fc-canvas-soft)] border-b border-[var(--fc-hairline)] font-mono text-[10px] text-[var(--fc-mute)] uppercase tracking-wider">
+        <div class="col-span-2 sm:col-span-1 text-center">RANK</div>
+        <div class="col-span-6 sm:col-span-5">ATHLETE & NATIONALITY</div>
+        <div class="col-span-4 sm:col-span-2 text-right">ELO RATING</div>
+        <div class="hidden sm:block sm:col-span-2 text-right">WIN RATE</div>
+        <div class="hidden sm:block sm:col-span-2 text-right">EARNINGS</div>
+      </div>
+
+      <!-- Table Body Rows -->
+      <div class="divide-y divide-[var(--fc-hairline)]">
+        {MOCK_LEADERBOARD.slice(0, 5).map((entry, index) => {
+          return (
+            <div class={`grid grid-cols-12 gap-2 px-5 py-3.5 items-center transition-colors hover:bg-[var(--fc-canvas-subtle)] ${index === 0 ? 'bg-[var(--fc-gold)]/5' : ''}`}>
+              <!-- Rank Position -->
+              <div class="col-span-2 sm:col-span-1 flex items-center justify-center font-mono font-medium text-sm">
+                <span class={entry.rank === 1 ? 'text-[var(--fc-gold)] font-bold' : entry.rank <= 3 ? 'text-[#f7f5f0]' : 'text-[var(--fc-mute)]'}>
+                  #{entry.rank.toString().padStart(2, '0')}
+                </span>
+              </div>
+
+              <!-- Player & Nationality -->
+              <div class="col-span-6 sm:col-span-5 flex items-center gap-3">
+                <UserAvatar username={entry.username} avatarUrl={entry.avatarUrl} size="sm" />
+                <div class="truncate">
+                  <div class="flex items-center gap-1.5">
+                    <a href={`/profile/${entry.username}`} class="font-display font-medium text-xs sm:text-sm text-[#f7f5f0] hover:text-[var(--fc-gold)] transition-colors truncate">
+                      {entry.username}
+                    </a>
+                    {entry.verified && (
+                      <span class="text-[var(--fc-gold)] text-[10px]" title="Tournament Verified">✓</span>
+                    )}
+                  </div>
+                  <span class="text-[10px] font-mono text-[var(--fc-mute)] block">
+                    {entry.region} · {entry.country}
+                  </span>
+                </div>
+              </div>
+
+              <!-- ELO Rating -->
+              <div class="col-span-4 sm:col-span-2 text-right font-mono">
+                <span class="font-medium text-xs sm:text-sm text-[#f7f5f0]">{entry.rating}</span>
+                <span class="text-[9px] text-[var(--fc-mute)] block">RP</span>
+              </div>
+
+              <!-- Win Rate -->
+              <div class="hidden sm:block sm:col-span-2 text-right font-mono">
+                <span class="text-xs text-[#f7f5f0] font-medium">{entry.winRate}%</span>
+                <span class="text-[9px] text-[var(--fc-mute)] block">{entry.matchesPlayed} MATCHES</span>
+              </div>
+
+              <!-- Total Earnings -->
+              <div class="hidden sm:block sm:col-span-2 text-right font-mono">
+                <span class="text-xs text-[var(--fc-gold)] font-medium">{entry.earnings}</span>
+                <span class="text-[9px] text-[var(--fc-mute)] block">USD</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  </div>
+</section>

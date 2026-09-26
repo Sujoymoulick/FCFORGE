@@ -1,0 +1,89 @@
+---
+interface Props {
+  characterModel?: string;
+  position?: [number, number, number];
+  scale?: [number, number, number];
+  rotation?: [number, number, number];
+  cameraPosition?: [number, number, number];
+  animationState?: string;
+  className?: string;
+}
+
+const {
+  characterModel = '/assets/3d/fcforge-player.glb',
+  position = [0, -0.6, 0],
+  scale = [1, 1, 1],
+  rotation = [0, 0, 0],
+  cameraPosition = [0, 1.6, 6.0],
+  animationState = 'idle',
+  className = ''
+} = Astro.props;
+---
+
+<div id="fcforge-3d-wrapper" class={`relative w-full h-full min-h-[500px] overflow-hidden ${className}`}>
+  <!-- 3D WebGL Canvas -->
+  <canvas id="fcforge-3d-canvas" class="w-full h-full absolute inset-0 z-10 touch-none pointer-events-none"></canvas>
+
+  <!-- WebGL Loading & Fallback Poster -->
+  <div id="fcforge-3d-fallback" class="absolute inset-0 z-0 flex flex-col items-center justify-center pointer-events-none hidden">
+    <div class="w-56 h-56 rounded-full bg-gradient-to-tr from-[var(--fc-cyan)]/20 via-[var(--fc-surface)] to-[var(--fc-green)]/20 border border-[var(--fc-cyan)]/40 backdrop-blur-md flex items-center justify-center animate-pulse shadow-2xl">
+      <div class="text-center p-6 space-y-1">
+        <span class="font-display font-black text-3xl text-[var(--fc-cyan)] block cyan-glow-text">#10</span>
+        <span class="text-[11px] font-mono tracking-widest text-white uppercase block">FCFORGE PLAYER</span>
+        <span class="text-[9px] font-mono tracking-wider text-[var(--fc-muted)] block">ARENA READY</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script data-model={characterModel} data-pos={JSON.stringify(position)} data-scale={JSON.stringify(scale)}>
+  import { FCForgeCharacterScene } from './FCForgeCharacterScene';
+
+  const wrapper = document.getElementById('fcforge-3d-wrapper');
+  const canvas = document.getElementById('fcforge-3d-canvas');
+  const fallback = document.getElementById('fcforge-3d-fallback');
+
+  const modelPath = wrapper?.parentElement?.dataset.model || wrapper?.getAttribute('data-model') || '/assets/3d/fcforge-player.glb';
+
+  let sceneInstance = null;
+
+  if (canvas && wrapper) {
+    try {
+      sceneInstance = new FCForgeCharacterScene({
+        container: wrapper,
+        canvas: canvas,
+        modelPath: modelPath,
+        onError: () => {
+          if (fallback) fallback.classList.remove('hidden');
+        }
+      });
+
+      let lastChapter = 1;
+
+      // Scroll Progress listener
+      const updateScrollProgress = () => {
+        const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+        if (totalHeight > 0) {
+          const progress = window.scrollY / totalHeight;
+          sceneInstance?.setScrollProgress(progress);
+
+          const currentChapter = sceneInstance?.getCurrentChapter() || 1;
+          if (currentChapter !== lastChapter) {
+            lastChapter = currentChapter;
+            window.dispatchEvent(new CustomEvent('fcforge:chapter', { detail: { chapter: currentChapter } }));
+          }
+        }
+      };
+
+      window.addEventListener('scroll', updateScrollProgress, { passive: true });
+      updateScrollProgress();
+
+      // Expose globally for direct API access
+      window.__FCFORGE_3D_SCENE__ = sceneInstance;
+
+    } catch (err) {
+      console.warn('FCForge WebGL Context Initialization:', err);
+      if (fallback) fallback.classList.remove('hidden');
+    }
+  }
+</script>

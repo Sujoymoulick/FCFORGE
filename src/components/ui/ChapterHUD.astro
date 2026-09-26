@@ -1,0 +1,71 @@
+---
+const chapters = [
+  { id: 'chapter-arrival', name: 'ARRIVAL', number: '01' },
+  { id: 'chapter-reveal', name: 'PROFILE', number: '02' },
+  { id: 'chapter-games', name: 'GAMES', number: '03' },
+  { id: 'chapter-tournaments', name: 'PORTAL', number: '04' },
+  { id: 'chapter-compete', name: 'MATCH ENGINE', number: '05' },
+  { id: 'chapter-leaderboard', name: 'RANKINGS', number: '06' },
+  { id: 'chapter-champion', name: 'CHAMPIONSHIP', number: '07' }
+];
+---
+
+<!-- Floating Side Story HUD (DESIGN.md) -->
+<aside class="fixed right-5 top-1/2 -translate-y-1/2 z-40 hidden xl:flex flex-col items-end gap-2 pointer-events-auto">
+  <div class="p-2 rounded-[6px] border border-[var(--fc-hairline)] bg-[var(--fc-canvas)]/90 backdrop-blur-xl space-y-1.5 shadow-xl">
+    <div class="text-[9px] font-mono text-[var(--fc-mute)] uppercase tracking-wider text-right border-b border-[var(--fc-hairline)] pb-1 px-2">
+      ARENA CHAPTERS
+    </div>
+
+    <div class="flex flex-col gap-0.5">
+      {chapters.map((ch, idx) => (
+        <a
+          href={`#${ch.id}`}
+          data-chapter-dot={idx + 1}
+          class="chapter-hud-item flex items-center gap-2 px-2.5 py-1 rounded-[3px] transition-all duration-200 group text-right cursor-pointer"
+        >
+          <span class="chapter-name text-[10px] font-mono text-[var(--fc-mute)] group-hover:text-[#f7f5f0] transition-colors">
+            {ch.number} {ch.name}
+          </span>
+          <span class="chapter-indicator w-1.5 h-1.5 rounded-[1px] border border-[var(--fc-hairline-bright)] bg-transparent group-hover:border-[#f7f5f0] transition-all"></span>
+        </a>
+      ))}
+    </div>
+  </div>
+</aside>
+
+<script>
+  const dots = document.querySelectorAll('[data-chapter-dot]');
+
+  function setActiveChapter(num: number) {
+    dots.forEach(dot => {
+      const chapterNum = parseInt(dot.getAttribute('data-chapter-dot') || '1', 10);
+      const indicator = dot.querySelector('.chapter-indicator');
+      const name = dot.querySelector('.chapter-name');
+
+      if (chapterNum === num) {
+        dot.classList.add('bg-[var(--fc-canvas-soft)]', 'border', 'border-[var(--fc-hairline)]');
+        if (indicator) {
+          indicator.className = 'chapter-indicator w-1.5 h-1.5 rounded-[1px] bg-[var(--fc-gold)] shadow-xs';
+        }
+        if (name) {
+          name.className = 'chapter-name text-[10px] font-mono font-medium text-[#f7f5f0]';
+        }
+      } else {
+        dot.classList.remove('bg-[var(--fc-canvas-soft)]', 'border', 'border-[var(--fc-hairline)]');
+        if (indicator) {
+          indicator.className = 'chapter-indicator w-1.5 h-1.5 rounded-[1px] border border-[var(--fc-hairline-bright)] bg-transparent';
+        }
+        if (name) {
+          name.className = 'chapter-name text-[10px] font-mono text-[var(--fc-mute)] group-hover:text-[#f7f5f0]';
+        }
+      }
+    });
+  }
+
+  window.addEventListener('fcforge:chapter', (e: any) => {
+    if (e.detail && e.detail.chapter) {
+      setActiveChapter(e.detail.chapter);
+    }
+  });
+</script>

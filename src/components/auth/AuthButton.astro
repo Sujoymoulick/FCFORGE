@@ -1,0 +1,16 @@
+---
+interface Props {
+  variant?: 'primary' | 'secondary';
+  label?: string;
+}
+
+const { variant = 'primary', label = 'SIGN IN' } = Astro.props;
+---
+
+<button 
+  type="button" 
+  class={variant === 'primary' ? 'esports-btn' : 'esports-btn-secondary'}
+  onclick="alert('Authentication module is ready for Clerk integration in future phase.')"
+>
+  {label}
+</button>

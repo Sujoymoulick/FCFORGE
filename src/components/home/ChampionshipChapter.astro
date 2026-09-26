@@ -1,0 +1,76 @@
+---
+import ChampionshipTrophy3D from '../3d/ChampionshipTrophy3D.astro';
+---
+
+<section id="chapter-champion" class="relative min-h-[90dvh] flex flex-col justify-center items-center text-center px-4 sm:px-8 py-20 sm:py-28 overflow-hidden">
+  <div class="max-w-4xl mx-auto relative z-20 space-y-8">
+    <!-- Chapter Eyebrow (DESIGN.md) -->
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-[4px] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)] shadow-xs">
+      <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-gold)] animate-pulse"></span>
+      <span class="text-[11px] font-mono font-medium tracking-tight text-[var(--fc-primary)] uppercase">
+        CHAPTER 07 // CHAMPIONSHIP PODIUM
+      </span>
+    </div>
+
+    <!-- Final Display Typography -->
+    <div class="space-y-2">
+      <p class="font-mono text-xs text-[var(--fc-gold)] uppercase tracking-wider">
+        PLAY · COMPETE · CONQUER
+      </p>
+      <h2 class="font-display text-4xl sm:text-6xl md:text-7xl font-normal tracking-[-0.035em] text-[#f7f5f0] leading-[1.0]">
+        Become the <br />
+        <span class="font-serif-italic text-[var(--fc-gold)] text-5xl sm:text-7xl md:text-8xl">
+          champion.
+        </span>
+      </h2>
+    </div>
+
+    <p class="text-sm sm:text-base text-[var(--fc-body)] max-w-xl mx-auto leading-relaxed font-normal">
+      The stadium floodlights are at peak intensity. The golden championship trophy stands on the podium. Join thousands of mobile football competitors on FCForge today.
+    </p>
+
+    <!-- Podium Specs Tile (card-mockup) -->
+    <div class="p-3 sm:p-4 rounded-[6px] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)] max-w-md mx-auto grid grid-cols-3 gap-3 text-center">
+      <div>
+        <span class="block text-[10px] font-mono text-[var(--fc-mute)] uppercase tracking-tight">GLOBAL CIRCUIT</span>
+        <span class="font-display font-medium text-sm sm:text-base text-[#f7f5f0]">24/7 LIVE</span>
+      </div>
+      <div class="border-l border-[var(--fc-hairline)] pl-2">
+        <span class="block text-[10px] font-mono text-[var(--fc-mute)] uppercase tracking-tight">TROPHY</span>
+        <span class="font-display font-medium text-sm sm:text-base text-[var(--fc-gold)]">SEASON 4</span>
+      </div>
+      <div class="border-l border-[var(--fc-hairline)] pl-2">
+        <span class="block text-[10px] font-mono text-[var(--fc-mute)] uppercase tracking-tight">MONTHLY POOL</span>
+        <span class="font-display font-medium text-sm sm:text-base text-[#f7f5f0]">$50,000</span>
+      </div>
+    </div>
+
+    <!-- Warp CTAs (button-primary & button-secondary-ghost) -->
+    <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+      <a href="/tournaments" class="btn-warp-primary text-sm py-2 px-5 group">
+        <span>Explore tournaments</span>
+        <span class="font-mono text-xs group-hover:translate-x-0.5 transition-transform">→</span>
+      </a>
+      <a href="/leaderboards" class="btn-warp-secondary text-sm py-2 px-5 group">
+        <span>View global ladder</span>
+        <span class="font-mono text-xs text-[var(--fc-mute)] group-hover:text-white transition-colors">↗</span>
+      </a>
+    </div>
+
+    <!-- Centerpiece 3D Championship Trophy on Podium Stage (Directly Above Footer) -->
+    <div class="pt-8 border-t border-[var(--fc-hairline)]/60 max-w-xl mx-auto w-full space-y-3">
+      <div class="space-y-0.5 text-center">
+        <span class="text-[11px] font-mono font-medium tracking-widest text-[var(--fc-gold)] uppercase flex items-center justify-center gap-1.5">
+          <span>🏆</span>
+          <span>SEASON 4 CHAMPIONSHIP TROPHY</span>
+        </span>
+        <p class="text-[11px] text-[var(--fc-mute)] font-mono">
+          Hardware-accelerated 3D WebGL stage. Click & drag to rotate 360°.
+        </p>
+      </div>
+
+      <!-- 3D Interactive Trophy Component -->
+      <ChampionshipTrophy3D />
+    </div>
+  </div>
+</section>

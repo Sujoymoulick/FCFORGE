@@ -1,0 +1,49 @@
+---
+const upcomingList = [
+  { game: 'eFootball™ Mobile', title: 'FCForge Global Cup — S4', date: 'LIVE NOW', status: 'Live', players: '128 / 128' },
+  { game: 'EA SPORTS FC™', title: 'Masters Open Qualifier', date: 'OCT 02 — 18:00 UTC', status: 'Open', players: '184 / 256' },
+  { game: 'eFootball™ Mobile', title: 'APAC Showdown Finals', date: 'OCT 05 — 20:00 UTC', status: 'Upcoming', players: '64 / 64' },
+  { game: 'EA SPORTS FC™', title: 'European Championship', date: 'OCT 15 — 16:00 UTC', status: 'Upcoming', players: '340 / 512' },
+  { game: 'eFootball™ Mobile', title: 'LATAM Weekly Clash', date: 'OCT 20 — 22:00 UTC', status: 'Upcoming', players: '48 / 64' }
+];
+---
+
+<div class="p-4 rounded-[6px] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)] space-y-4">
+  <!-- Header (DESIGN.md) -->
+  <div class="flex items-center justify-between border-b border-[var(--fc-hairline)] pb-3">
+    <div class="flex items-center gap-2">
+      <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-gold)]"></span>
+      <span class="font-display font-medium text-xs text-[#f7f5f0] uppercase tracking-wider">UPCOMING SCHEDULE</span>
+    </div>
+    <a href="/tournaments" class="text-[10px] font-mono text-[var(--fc-gold)] hover:underline uppercase">SEE ALL</a>
+  </div>
+
+  <!-- Event List (DESIGN.md card-mockup) -->
+  <div class="space-y-2">
+    {upcomingList.map(item => (
+      <a href="/tournaments" class="block p-2.5 rounded-[4px] bg-[var(--fc-canvas)] border border-[var(--fc-hairline)] hover:border-[var(--fc-hairline-bright)] transition-colors group">
+        <div class="flex items-center justify-between text-[10px] font-mono mb-1">
+          <span class="text-[var(--fc-mute)]">{item.game}</span>
+          <span class={`px-1.5 py-0.2 rounded-[2px] font-medium uppercase ${item.status === 'Live' ? 'bg-red-500/10 text-red-300 border border-red-500/20' : 'text-[var(--fc-mute)]'}`}>
+            {item.status}
+          </span>
+        </div>
+        <h5 class="font-display font-medium text-xs text-[#f7f5f0] group-hover:text-[var(--fc-gold)] transition-colors truncate">
+          {item.title}
+        </h5>
+        <div class="flex items-center justify-between text-[10px] font-mono text-[var(--fc-mute)] mt-1.5">
+          <span>{item.date}</span>
+          <span>{item.players}</span>
+        </div>
+      </a>
+    ))}
+  </div>
+
+  <!-- My Schedule Status -->
+  <div class="pt-3 border-t border-[var(--fc-hairline)] space-y-1.5">
+    <span class="text-[10px] font-mono text-[var(--fc-mute)] uppercase tracking-wider block">MY SCHEDULE</span>
+    <div class="p-2.5 rounded-[4px] bg-[var(--fc-canvas)] border border-[var(--fc-hairline)] text-center text-xs font-mono text-[var(--fc-body)]">
+      You are registered for <strong class="text-[#f7f5f0]">1 active match</strong>.
+    </div>
+  </div>
+</div>

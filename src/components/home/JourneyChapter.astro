@@ -1,0 +1,69 @@
+---
+---
+
+<section id="chapter-journey" class="relative min-h-[85vh] flex flex-col justify-center px-4 sm:px-8 py-20">
+  <div class="max-w-7xl mx-auto w-full relative z-20 space-y-12">
+    <!-- Chapter Header -->
+    <div class="text-center space-y-3 max-w-2xl mx-auto">
+      <span class="text-[11px] font-mono font-bold tracking-widest text-[var(--fc-lime)] uppercase px-3 py-1 rounded-full bg-[var(--fc-surface-2)] border border-[var(--fc-lime)]/30 inline-block">
+        CHAPTER 06 — LEGACY
+      </span>
+      <h2 class="font-display font-black text-3xl sm:text-5xl uppercase tracking-tight text-white">
+        YOUR <span class="text-[var(--fc-lime)]">PLAYER JOURNEY</span>
+      </h2>
+      <p class="text-sm text-[var(--fc-muted)]">
+        Every match, every victory, and every tournament run contributes to your persistent FCForge esports passport.
+      </p>
+    </div>
+
+    <!-- Timeline Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {[
+        {
+          step: '01',
+          title: 'REGISTER & MATCHMAKE',
+          desc: 'Join global mobile tournaments or instant ranked match brackets.',
+          icon: '🎮',
+          color: 'border-[var(--fc-cyan)]'
+        },
+        {
+          step: '02',
+          title: 'EARN ELO & BADGES',
+          desc: 'Unlock verified skill badges, clean sheet streaks, and rank multipliers.',
+          icon: '⚡',
+          color: 'border-[var(--fc-green)]'
+        },
+        {
+          step: '03',
+          title: 'CLAIM PRIZE POOLS',
+          desc: 'Win official tournament cash prize payouts directly to your account.',
+          icon: '💎',
+          color: 'border-[var(--fc-lime)]'
+        },
+        {
+          step: '04',
+          title: 'BUILD YOUR LEGACY',
+          desc: 'Feature on the global broadcast leaderboards and earn season hall-of-fame status.',
+          icon: '👑',
+          color: 'border-[var(--fc-orange)]'
+        }
+      ].map(card => (
+        <div class={`esports-card rounded-2xl p-6 border ${card.color} bg-[var(--fc-surface)]/90 backdrop-blur-md flex flex-col justify-between space-y-4`}>
+          <div class="flex items-center justify-between">
+            <span class="text-3xl">{card.icon}</span>
+            <span class="font-mono text-xs font-bold text-[var(--fc-muted)]">STEP {card.step}</span>
+          </div>
+
+          <div class="space-y-2">
+            <h3 class="font-display font-black text-lg text-white uppercase">{card.title}</h3>
+            <p class="text-xs text-[var(--fc-muted)] leading-relaxed">{card.desc}</p>
+          </div>
+
+          <div class="pt-2 text-[10px] font-mono text-[var(--fc-cyan)] uppercase font-bold">
+            PASSPORT INTEGRATED
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

@@ -1,0 +1,278 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* Warp Inspired Warm Charcoal & Off-White Palette (DESIGN.md) */
+    --fc-canvas: #161311;
+    --fc-canvas-soft: #231f1c;
+    --fc-canvas-subtle: #2e2824;
+    --fc-hairline: #3f3731;
+    --fc-hairline-bright: #564c44;
+    --fc-hairline-glow: rgba(247, 245, 240, 0.12);
+
+    --fc-primary: #f7f5f0;
+    --fc-on-primary: #161311;
+    --fc-ink: #f7f5f0;
+    --fc-body-strong: #dad2c1;
+    --fc-body: #c9c0ad;
+    --fc-mute: #9e9587;
+
+    /* Metallic Gold & Arena Accent (Harmonized with 3D Messi model) */
+    --fc-gold: #e5b869;
+    --fc-gold-soft: rgba(229, 184, 105, 0.12);
+    --fc-cyan: #00E5FF;
+    --fc-green: #8CFF3D;
+    --fc-lime: #C6FF4A;
+    --fc-orange: #FF6B35;
+
+    /* Legacy compatibility mappings */
+    --fc-bg: var(--fc-canvas);
+    --fc-surface: var(--fc-canvas-soft);
+    --fc-surface-2: var(--fc-canvas-subtle);
+    --fc-surface-3: #38312c;
+    --fc-border: var(--fc-hairline);
+    --fc-border-bright: var(--fc-hairline-bright);
+    --fc-white: var(--fc-ink);
+    --fc-muted: var(--fc-body);
+  }
+
+  html {
+    background-color: var(--fc-canvas);
+    color: var(--fc-ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
+  body {
+    background-color: var(--fc-canvas);
+    background-image: radial-gradient(rgba(247, 245, 240, 0.075) 1px, transparent 1px);
+    background-size: 24px 24px;
+    color: var(--fc-ink);
+    min-height: 100dvh;
+    margin: 0;
+    overflow-x: hidden;
+    position: relative;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Typography Hierarchy (DESIGN.md) */
+.font-display {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  letter-spacing: -0.025em;
+}
+
+.font-serif-italic {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.font-mono {
+  font-family: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Warp Design Language: Primary CTA (DESIGN.md button-primary) */
+.btn-warp-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.15rem;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  letter-spacing: -0.01em;
+  color: var(--fc-on-primary);
+  background-color: var(--fc-primary);
+  border-radius: 4px;
+  border: 1px solid var(--fc-primary);
+  transition: all 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.btn-warp-primary:hover {
+  background-color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(247, 245, 240, 0.15);
+}
+
+.btn-warp-primary:active {
+  transform: translateY(0px) scale(0.99);
+}
+
+/* Warp Design Language: Secondary Ghost / Hairline CTA (DESIGN.md button-secondary-ghost) */
+.btn-warp-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.15rem;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  letter-spacing: -0.01em;
+  color: var(--fc-ink);
+  background-color: var(--fc-canvas);
+  border: 1px solid var(--fc-hairline);
+  border-radius: 4px;
+  transition: all 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-warp-secondary:hover {
+  background-color: var(--fc-canvas-soft);
+  border-color: var(--fc-hairline-bright);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.btn-warp-secondary:active {
+  transform: translateY(0px) scale(0.99);
+}
+
+/* Warp Design Language: Card Surface (DESIGN.md card-content & card-mockup) */
+.card-warp {
+  background-color: var(--fc-canvas-soft);
+  border: 1px solid var(--fc-hairline);
+  border-radius: 6px;
+  transition: all 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.card-warp:hover {
+  border-color: var(--fc-hairline-bright);
+}
+
+/* Backward-compatible high-end button & doppelrand utilities */
+.btn-island {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.65rem 1.35rem;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: -0.01em;
+  color: var(--fc-on-primary);
+  background-color: var(--fc-primary);
+  border-radius: 4px;
+  border: 1px solid var(--fc-primary);
+  transition: all 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-island:hover {
+  background-color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(247, 245, 240, 0.18);
+}
+
+.btn-island-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.65rem 1.35rem;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 0.85rem;
+  letter-spacing: -0.01em;
+  color: var(--fc-ink);
+  background: var(--fc-canvas-soft);
+  border: 1px solid var(--fc-hairline);
+  border-radius: 4px;
+  transition: all 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-island-secondary:hover {
+  border-color: var(--fc-hairline-bright);
+  background: var(--fc-canvas-subtle);
+  transform: translateY(-1px);
+}
+
+.btn-icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  transition: transform 0.2s ease;
+}
+
+.btn-island:hover .btn-icon-wrapper {
+  transform: translateX(2px);
+}
+
+/* Hairline double-bezel matching Warp specification */
+.doppelrand-shell {
+  background: var(--fc-canvas-soft);
+  border: 1px solid var(--fc-hairline);
+  border-radius: 6px;
+  padding: 0.25rem;
+  transition: border-color 0.25s ease;
+}
+
+.doppelrand-core {
+  background: var(--fc-canvas);
+  border: 1px solid var(--fc-hairline);
+  border-radius: 4px;
+  padding: 1.25rem;
+}
+
+.doppelrand-shell:hover {
+  border-color: var(--fc-hairline-bright);
+}
+
+/* Subtle stadium dotted grid with warm hairline pattern */
+.bg-dotted,
+.stadium-grid {
+  background-size: 24px 24px;
+  background-image: radial-gradient(rgba(247, 245, 240, 0.08) 1.2px, transparent 1.2px);
+}
+
+/* Scrollbar with warm charcoal styling */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: var(--fc-canvas);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--fc-hairline);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--fc-body);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Drag cursor interaction states for 3D athlete */
+body.fcforge-grabbing,
+body.fcforge-grabbing * {
+  cursor: grabbing !important;
+  user-select: none !important;
+}
+
+#hero-3d-interactive-zone {
+  touch-action: none;
+}
+

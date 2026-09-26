@@ -1,0 +1,98 @@
+---
+const leagueTiers = [
+  {
+    id: 'amateur',
+    name: 'AMATEUR DIVISION',
+    tagline: 'OPEN TO ALL ATHLETES',
+    borderColor: 'border-[var(--fc-hairline)]',
+    badgeColor: 'text-[var(--fc-body)]',
+    minElo: '0 - 1,499 ELO',
+    perks: ['Free Entry Brackets', 'Daily Ranked Ladders', 'Community Badge Verification']
+  },
+  {
+    id: 'premier',
+    name: 'PREMIER DIVISION',
+    tagline: 'SEMI-PRO CIRCUIT',
+    borderColor: 'border-[var(--fc-hairline-bright)]',
+    badgeColor: 'text-[#f7f5f0]',
+    minElo: '1,500 - 2,199 ELO',
+    perks: ['Weekly Cash Cups', 'Official Broadcast Coverage', 'Esports Passport Rating']
+  },
+  {
+    id: 'legends',
+    name: 'LEGENDS DIVISION',
+    tagline: 'CHAMPIONSHIP CIRCUIT',
+    borderColor: 'border-[var(--fc-gold)]',
+    badgeColor: 'text-[var(--fc-gold)]',
+    minElo: '2,200+ ELO',
+    perks: ['Global Championship Seeds', '$50,000 Pool Eligibility', 'Pro Contract Scouting']
+  }
+];
+---
+
+<section id="chapter-tiers" class="relative py-8">
+  <div class="space-y-6">
+    <!-- Header (DESIGN.md) -->
+    <div class="flex items-center justify-between border-b border-[var(--fc-hairline)] pb-4">
+      <div class="space-y-1">
+        <span class="text-[10px] font-mono text-[var(--fc-gold)] uppercase tracking-wider block">
+          COMPETITIVE TIERS
+        </span>
+        <h3 class="font-display font-medium text-xl sm:text-2xl text-[#f7f5f0] tracking-tight">
+          League <span class="font-serif-italic text-[var(--fc-gold)] text-2xl sm:text-3xl">divisions.</span>
+        </h3>
+      </div>
+      <span class="text-xs font-mono text-[var(--fc-mute)] hidden sm:inline">ELO RATING CLASSIFICATION</span>
+    </div>
+
+    <!-- 3 Tier Cards (DESIGN.md ex-pricing-tier & ex-pricing-tier-featured) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+      {leagueTiers.map(tier => {
+        const isLegends = tier.id === 'legends';
+        return (
+          <div class={`p-5 rounded-[6px] bg-[var(--fc-canvas-soft)] border ${tier.borderColor} flex flex-col justify-between space-y-5 transition-all duration-200 group ${isLegends ? 'shadow-md shadow-black/40' : ''}`}>
+            <!-- Tier Header -->
+            <div class="space-y-1.5 border-b border-[var(--fc-hairline)] pb-3">
+              <div class="flex items-center justify-between">
+                <span class={`font-mono text-xs font-medium ${tier.badgeColor}`}>
+                  {tier.name}
+                </span>
+                {isLegends && (
+                  <span class="text-[9px] font-mono px-2 py-0.5 rounded-[2px] bg-[var(--fc-gold)]/10 text-[var(--fc-gold)] border border-[var(--fc-gold)]/30">
+                    TIER 1
+                  </span>
+                )}
+              </div>
+              <p class="text-[11px] font-mono text-[var(--fc-mute)]">{tier.tagline}</p>
+              <div class="pt-1">
+                <span class="font-mono text-base font-medium text-[#f7f5f0]">{tier.minElo}</span>
+              </div>
+            </div>
+
+            <!-- Perks List (DM Mono) -->
+            <ul class="space-y-2 text-xs font-mono text-[var(--fc-body)] my-auto">
+              {tier.perks.map(perk => (
+                <li class="flex items-start gap-2">
+                  <span class={isLegends ? 'text-[var(--fc-gold)]' : 'text-[var(--fc-mute)]'}>✓</span>
+                  <span>{perk}</span>
+                </li>
+              ))}
+            </ul>
+
+            <!-- Action Button -->
+            <div class="pt-3 border-t border-[var(--fc-hairline)]">
+              <a
+                href="/tournaments"
+                class={`w-full text-xs py-1.5 px-3 block text-center rounded-[4px] font-medium font-sans transition-all duration-200 ${
+                  isLegends ? 'btn-warp-primary' : 'btn-warp-secondary'
+                }`}
+              >
+                Join {tier.name.split(' ')[0]} ladder
+              </a>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+</section>
