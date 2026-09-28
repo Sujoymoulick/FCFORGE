@@ -344,6 +344,21 @@ nav.mobile-bottom-nav {
   flex-shrink: 0;
 }
 
+/* Ensure responsive display utilities strictly override .snap-row */
+@media (min-width: 1024px) {
+  .snap-row.lg\:hidden {
+    display: none !important;
+  }
+}
+@media (min-width: 640px) {
+  .snap-row.sm\:hidden {
+    display: none !important;
+  }
+}
+.snap-row.hidden {
+  display: none !important;
+}
+
 /* ─── Fluid clamp typography helpers ────────────────────────────────────── */
 .text-fluid-hero {
   font-size: clamp(2.5rem, 8vw, 4.75rem);

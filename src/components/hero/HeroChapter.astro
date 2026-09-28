@@ -74,30 +74,36 @@
       </div>
 
       <!-- Live Performance Specs Tile (DESIGN.md card-mockup / ex-data-table-cell) -->
-      <div class="hero-stagger-5 pt-2 max-w-lg">
-        <div class="p-3 sm:p-4 rounded-[6px] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)] grid grid-cols-3 gap-3 text-left">
+      <div class="hero-stagger-5 pt-2 max-w-xl">
+        <div class="p-3 sm:p-4 rounded-[6px] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)] grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 text-left">
           <div>
-            <span class="block font-display font-medium text-lg sm:text-xl text-[#f7f5f0] tracking-tight">$50,000</span>
+            <span class="block font-display font-medium text-lg sm:text-xl text-[#f7f5f0] tracking-tight">$50K</span>
             <span class="text-[10px] font-mono text-[var(--fc-mute)] uppercase tracking-tight block mt-0.5">MONTHLY POOLS</span>
           </div>
-          <div class="border-l border-[var(--fc-hairline)] pl-3 sm:pl-4">
-            <span class="block font-display font-medium text-lg sm:text-xl text-[var(--fc-gold)] tracking-tight">12,500+</span>
-            <span class="text-[10px] font-mono text-[var(--fc-mute)] uppercase tracking-tight block mt-0.5">VERIFIED ATHLETES</span>
+          <div class="sm:border-l border-[var(--fc-hairline)] sm:pl-3">
+            <span class="block font-display font-medium text-lg sm:text-xl text-[var(--fc-gold)] tracking-tight">12.5K+</span>
+            <span class="text-[10px] font-mono text-[var(--fc-mute)] uppercase tracking-tight block mt-0.5">ATHLETES</span>
           </div>
-          <div class="border-l border-[var(--fc-hairline)] pl-3 sm:pl-4">
+          <div class="border-t sm:border-t-0 sm:border-l border-[var(--fc-hairline)] pt-2 sm:pt-0 sm:pl-3">
             <span class="block font-display font-medium text-lg sm:text-xl text-[#f7f5f0] tracking-tight">100%</span>
-            <span class="text-[10px] font-mono text-[var(--fc-mute)] uppercase tracking-tight block mt-0.5">MOBILE RANKED</span>
+            <span class="text-[10px] font-mono text-[var(--fc-mute)] uppercase tracking-tight block mt-0.5">RANKED</span>
+          </div>
+          <div class="border-t sm:border-t-0 sm:border-l border-[var(--fc-hairline)] pt-2 sm:pt-0 sm:pl-3">
+            <div class="flex items-baseline gap-1">
+              <span class="font-display font-medium text-lg sm:text-xl text-[var(--fc-gold)] tracking-tight">#01</span>
+              <span class="text-[10px] font-mono text-[#f7f5f0]">1,840 RP</span>
+            </div>
+            <span class="text-[10px] font-mono text-[var(--fc-mute)] uppercase tracking-tight block mt-0.5">LEADER · 94% WR</span>
           </div>
         </div>
       </div>
 
     </div>
 
-    <!-- Right Column: 3D Floating HUD Cards & Interactive Athlete Controller (5 cols desktop) -->
-    <!-- Positioned inside the 3D space with depth parallax -->
-    <div class="lg:col-span-5 relative h-full min-h-[460px] pointer-events-auto select-none">
+    <!-- Right Column: 3D Athlete Stage & Non-overlapping Perimeter HUD (5 cols desktop) -->
+    <div id="hero-3d-hud" class="lg:col-span-5 relative h-full min-h-[460px] pointer-events-auto select-none transition-opacity duration-300">
 
-      <!-- Mobile: Horizontal scroll row of HUD cards (shown only on mobile/tablet) -->
+      <!-- Mobile: Horizontal scroll row of HUD cards (strictly hidden on desktop) -->
       <div class="snap-row lg:hidden py-2">
         <!-- Card: Live Tournament -->
         <div class="min-w-[220px] p-3 rounded-[6px] bg-[var(--fc-canvas-soft)]/95 border border-[var(--fc-hairline)] shadow-lg pointer-events-auto">
@@ -119,23 +125,6 @@
             </div>
           </div>
         </div>
-        <!-- Card: Global Leader -->
-        <div class="min-w-[190px] p-3 rounded-[6px] bg-[var(--fc-canvas-soft)]/95 border border-[var(--fc-hairline)] shadow-lg pointer-events-auto">
-          <div class="space-y-1.5">
-            <div class="flex items-center justify-between text-[10px] font-mono">
-              <span class="text-[var(--fc-mute)] uppercase">GLOBAL LEADER</span>
-              <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-gold)]"></span>
-            </div>
-            <div class="flex items-baseline gap-2">
-              <span class="font-display font-medium text-2xl text-[var(--fc-gold)] tracking-tight">#01</span>
-              <span class="text-xs font-mono text-[#f7f5f0]">1,840 RP</span>
-            </div>
-            <div class="text-[10px] font-mono text-[var(--fc-body)] flex items-center justify-between">
-              <span>WIN RATE</span>
-              <span class="text-[#f7f5f0] font-medium">94.2%</span>
-            </div>
-          </div>
-        </div>
         <!-- Card: Next Match -->
         <div class="min-w-[190px] p-3 rounded-[6px] bg-[var(--fc-canvas-soft)]/95 border border-[var(--fc-hairline)] shadow-lg pointer-events-auto">
           <div class="space-y-1">
@@ -149,114 +138,86 @@
         </div>
       </div>
 
-      <!-- Desktop: Absolute floating cards (hidden on mobile) -->
-      <div class="hidden lg:block absolute inset-0">
-        <!-- Interactive Drag Surface -->
+      <!-- Desktop: Non-overlapping Perimeter HUD Overlays (hidden on mobile) -->
+      <div class="hidden lg:block absolute inset-0 pointer-events-none">
+        <!-- Interactive Drag Surface (No browser tooltip popup) -->
         <div
           id="hero-3d-interactive-zone"
-          class="absolute inset-0 z-10 cursor-grab active:cursor-grabbing rounded-[8px]"
-          title="Click & Drag horizontally to rotate Lionel Messi 360°"
+          class="absolute inset-0 z-10 cursor-grab active:cursor-grabbing rounded-[8px] pointer-events-auto"
         ></div>
 
-      <!-- Card 1: Live Tournament Card (Top-Right) -->
-      <div
-        class="floating-hero-card card-depth-1 absolute right-0 top-0 max-w-[240px] p-3 rounded-[6px] bg-[var(--fc-canvas-soft)]/95 backdrop-blur-md border border-[var(--fc-hairline)] shadow-xl transition-all duration-300 hover:border-[var(--fc-hairline-bright)] z-20 pointer-events-auto"
-        style="transform: translate3d(0, 0, 30px);"
-      >
-        <div class="space-y-2">
-          <div class="flex items-center justify-between text-[10px] font-mono">
-            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[2px] bg-[var(--fc-gold)]/10 text-[var(--fc-gold)] font-medium border border-[var(--fc-gold)]/25">
-              <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-gold)] animate-pulse"></span>
-              LIVE ROUND
-            </span>
-            <span class="text-[var(--fc-mute)]">128 PLAYERS</span>
-          </div>
-          <div>
-            <h4 class="font-display font-medium text-xs text-[#f7f5f0] tracking-tight">FCForge Global Cup</h4>
-            <p class="text-[10px] font-mono text-[var(--fc-body)]">eFootball™ Mobile Division I</p>
-          </div>
-          <div class="flex items-center justify-between pt-1.5 border-t border-[var(--fc-hairline)] text-[10px] font-mono">
-            <span class="text-[var(--fc-mute)]">PRIZE POOL</span>
-            <span class="font-medium text-[#f7f5f0]">$25,000 USD</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Card 2: Athlete Passport Badge (Mid-Right) -->
-      <div
-        class="floating-hero-card card-depth-2 absolute right-0 top-36 max-w-[210px] p-3 rounded-[6px] bg-[var(--fc-canvas-soft)]/95 backdrop-blur-md border border-[var(--fc-hairline)] shadow-xl transition-all duration-300 hover:border-[var(--fc-hairline-bright)] z-20 pointer-events-auto"
-        style="transform: translate3d(0, 0, 50px);"
-      >
-        <div class="space-y-1.5">
-          <div class="flex items-center justify-between text-[10px] font-mono">
-            <span class="text-[var(--fc-mute)] uppercase">GLOBAL LEADER</span>
-            <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-gold)]"></span>
-          </div>
-          <div class="flex items-baseline gap-2">
-            <span class="font-display font-medium text-2xl text-[var(--fc-gold)] tracking-tight">#01</span>
-            <span class="text-xs font-mono text-[#f7f5f0]">1,840 RP</span>
-          </div>
-          <div class="text-[10px] font-mono text-[var(--fc-body)] flex items-center justify-between">
-            <span>WIN RATE</span>
-            <span class="text-[#f7f5f0] font-medium">94.2%</span>
+        <!-- Top-Right Corner HUD: Tournament Telemetry (Anchored away from model silhouette) -->
+        <div
+          class="floating-hero-card card-depth-1 absolute right-0 top-0 max-w-[200px] p-2.5 rounded-[6px] bg-[var(--fc-canvas-soft)]/90 backdrop-blur-md border border-[var(--fc-hairline)] shadow-xl transition-all duration-300 hover:border-[var(--fc-hairline-bright)] z-20 pointer-events-auto"
+          style="transform: translate3d(0, 0, 20px);"
+        >
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-[10px] font-mono">
+              <span class="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-[2px] bg-[var(--fc-gold)]/10 text-[var(--fc-gold)] font-medium border border-[var(--fc-gold)]/25">
+                <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-gold)] animate-pulse"></span>
+                LIVE ROUND
+              </span>
+              <span class="text-[var(--fc-mute)] text-[9px]">128 PLAYERS</span>
+            </div>
+            <div>
+              <h4 class="font-display font-medium text-xs text-[#f7f5f0] tracking-tight">FCForge Global Cup</h4>
+              <p class="text-[9px] font-mono text-[var(--fc-body)]">eFootball™ Mobile Div I</p>
+            </div>
+            <div class="flex items-center justify-between pt-1 border-t border-[var(--fc-hairline)] text-[9px] font-mono">
+              <span class="text-[var(--fc-mute)]">PRIZE POOL</span>
+              <span class="font-medium text-[var(--fc-gold)]">$25,000 USD</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Card 3: Next Match Terminal Countdown (Bottom-Right) -->
-      <div
-        class="floating-hero-card card-depth-3 absolute right-0 bottom-14 max-w-[210px] p-3 rounded-[6px] bg-[var(--fc-canvas-soft)]/95 backdrop-blur-md border border-[var(--fc-hairline)] shadow-xl transition-all duration-300 hover:border-[var(--fc-hairline-bright)] z-20 pointer-events-auto"
-        style="transform: translate3d(0, 0, 40px);"
-      >
-        <div class="space-y-1">
-          <div class="flex items-center justify-between text-[10px] font-mono">
+        <!-- Bottom-Right Corner HUD: Match Terminal & 360° Controls Dock -->
+        <div class="absolute right-0 bottom-0 z-30 flex flex-col items-end gap-2 pointer-events-auto">
+          <!-- Next Match Terminal Chip -->
+          <div
+            class="floating-hero-card card-depth-3 px-3 py-1.5 rounded-[4px] bg-[var(--fc-canvas-soft)]/95 backdrop-blur-md border border-[var(--fc-hairline)] shadow-xl flex items-center gap-3 font-mono text-[10px]"
+            style="transform: translate3d(0, 0, 25px);"
+          >
             <span class="text-[var(--fc-gold)] font-medium">NEXT MATCH</span>
-            <span class="px-1.5 py-0.5 rounded-[2px] bg-[var(--fc-canvas)] text-[var(--fc-body)] text-[9px] border border-[var(--fc-hairline)]">
-              GRAND FINALS
-            </span>
+            <span class="text-[#f7f5f0] font-medium tracking-wider text-xs">08:42</span>
+            <span class="text-[var(--fc-mute)] text-[9px]">#10 READY</span>
           </div>
-          <div class="font-mono text-lg font-medium text-[#f7f5f0] tracking-wider">
-            08:42
+
+          <!-- 360° Interactive Athlete Controls & Rotation Hints (DESIGN.md) -->
+          <div class="flex items-center gap-2 p-1.5 px-3 rounded-[4px] bg-[var(--fc-canvas-soft)]/95 backdrop-blur-md border border-[var(--fc-hairline)] font-mono text-[10px] shadow-2xl">
+            <div class="flex items-center gap-2 pr-2 border-r border-[var(--fc-hairline)]">
+              <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-gold)] animate-pulse"></span>
+              <span id="hero-drag-hint-text" class="text-[#f7f5f0] font-medium tracking-tight">DRAG TO ROTATE 360°</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <button
+                type="button"
+                data-angle="0"
+                class="hero-angle-preset-btn px-2 py-0.5 rounded-[2px] bg-[var(--fc-canvas)] hover:bg-[var(--fc-canvas-subtle)] border border-[var(--fc-hairline)] text-[var(--fc-primary)] transition-colors"
+                title="Face front"
+              >
+                FRONT
+              </button>
+              <button
+                type="button"
+                data-angle="3.1415"
+                class="hero-angle-preset-btn px-2 py-0.5 rounded-[2px] bg-[var(--fc-canvas)] hover:bg-[var(--fc-canvas-subtle)] border border-[var(--fc-hairline)] text-[var(--fc-gold)] transition-colors"
+                title="View #10 Argentina Kit"
+              >
+                #10 BACK
+              </button>
+              <button
+                type="button"
+                data-angle="0"
+                class="hero-angle-preset-btn px-1.5 py-0.5 rounded-[2px] bg-[var(--fc-canvas)] hover:bg-[var(--fc-canvas-subtle)] border border-[var(--fc-hairline)] text-[var(--fc-mute)] hover:text-[#f7f5f0] transition-colors"
+                title="Reset to front angle"
+              >
+                ↺
+              </button>
+            </div>
           </div>
-          <p class="text-[10px] font-mono text-[var(--fc-mute)]">L. MESSI / #10 READY</p>
         </div>
-      </div>
 
-      <!-- 360° Interactive Athlete Controls & Rotation Hints (DESIGN.md) -->
-      <div class="absolute bottom-0 right-0 z-30 flex items-center gap-2 p-1.5 px-3 rounded-[4px] bg-[var(--fc-canvas-soft)]/95 backdrop-blur-md border border-[var(--fc-hairline)] font-mono text-[10px] shadow-2xl pointer-events-auto">
-        <div class="flex items-center gap-2 pr-2 border-r border-[var(--fc-hairline)]">
-          <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-gold)] animate-pulse"></span>
-          <span id="hero-drag-hint-text" class="text-[#f7f5f0] font-medium tracking-tight">DRAG TO ROTATE 360°</span>
-        </div>
-        <div class="flex items-center gap-1">
-          <button
-            type="button"
-            data-angle="0"
-            class="hero-angle-preset-btn px-2 py-0.5 rounded-[2px] bg-[var(--fc-canvas)] hover:bg-[var(--fc-canvas-subtle)] border border-[var(--fc-hairline)] text-[var(--fc-primary)] transition-colors"
-            title="Face front"
-          >
-            FRONT
-          </button>
-          <button
-            type="button"
-            data-angle="3.1415"
-            class="hero-angle-preset-btn px-2 py-0.5 rounded-[2px] bg-[var(--fc-canvas)] hover:bg-[var(--fc-canvas-subtle)] border border-[var(--fc-hairline)] text-[var(--fc-gold)] transition-colors"
-            title="View #10 Argentina Kit"
-          >
-            #10 BACK
-          </button>
-          <button
-            type="button"
-            data-angle="0"
-            class="hero-angle-preset-btn px-1.5 py-0.5 rounded-[2px] bg-[var(--fc-canvas)] hover:bg-[var(--fc-canvas-subtle)] border border-[var(--fc-hairline)] text-[var(--fc-mute)] hover:text-[#f7f5f0] transition-colors"
-            title="Reset to front angle"
-          >
-            ↺
-          </button>
-        </div>
-      </div>
-
-      </div> <!-- /desktop floating cards wrapper -->
+      </div> <!-- /desktop perimeter HUD wrapper -->
     </div> <!-- /right column -->
 
   </div>

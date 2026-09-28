@@ -408,10 +408,13 @@ export class FCForgePlayer3DScene {
   // --- Tiled Grass Surface from GRASS3D.glb ---
   private loadGrassSurface(path: string): void {
     const loader = new GLTFLoader();
-    // Tile configuration — fills a 24×24 unit ground plane
-    const TILE_COUNT_X = 7;   // columns
-    const TILE_COUNT_Z = 7;   // rows
-    const TILE_SIZE    = 3.6; // world-units per tile (tweak if GLB has different natural size)
+
+    // Small dense tiles — stadium short-cut turf look
+    const TILE_COUNT_X = 16;  // columns
+    const TILE_COUNT_Z = 16;  // rows
+    const TILE_SIZE    = 1.5; // small footprint per tile
+    const GRASS_HEIGHT_SCALE = 0.12; // crush Y — makes blades very short (like mown pitch grass)
+
     const TOTAL_W = TILE_COUNT_X * TILE_SIZE;
     const TOTAL_D = TILE_COUNT_Z * TILE_SIZE;
     const OFFSET_X = -TOTAL_W / 2 + TILE_SIZE / 2;
@@ -420,48 +423,45 @@ export class FCForgePlayer3DScene {
     loader.load(
       path,
       (gltf) => {
-        // Measure the loaded tile's natural bounding box
         const templateScene = gltf.scene;
         const box = new THREE.Box3().setFromObject(templateScene);
         const size = new THREE.Vector3();
         box.getSize(size);
 
-        // Scale so the tile's largest horizontal extent == TILE_SIZE
+        // Scale horizontal extent to exactly TILE_SIZE
         const naturalSize = Math.max(size.x, size.z) || 1;
-        const tileScale = TILE_SIZE / naturalSize;
+        const horizScale = TILE_SIZE / naturalSize;
 
-        // Sink the tile so its bottom sits at y=0
-        const bottomY = box.min.y * tileScale;
+        // Bottom flush at y=0 (using horizontal scale for X/Z, then Y is overridden)
+        const bottomY = box.min.y * horizScale * GRASS_HEIGHT_SCALE;
 
         for (let row = 0; row < TILE_COUNT_Z; row++) {
           for (let col = 0; col < TILE_COUNT_X; col++) {
-            // Clone the entire scene graph (deep copy)
             const tile = templateScene.clone(true);
-            tile.scale.setScalar(tileScale);
 
-            // Position in grid
+            // Apply scale: X/Z = tile footprint, Y = crushed height
+            tile.scale.set(horizScale, horizScale * GRASS_HEIGHT_SCALE, horizScale);
+
             const x = OFFSET_X + col * TILE_SIZE;
             const z = OFFSET_Z + row * TILE_SIZE;
             tile.position.set(x, -bottomY, z);
 
-            // Alternate 90° rotations for visual variety (breaks repetition)
+            // 4-way rotation variety to break visual tiling repetition
             const rotVariants = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
             tile.rotation.y = rotVariants[(row * TILE_COUNT_X + col) % 4];
 
-            // Enable shadows on every mesh inside the tile
             tile.traverse((child) => {
               if ((child as THREE.Mesh).isMesh) {
                 const mesh = child as THREE.Mesh;
                 mesh.receiveShadow = true;
-                mesh.castShadow = !this.isMobile;
+                mesh.castShadow = false; // short grass doesn't need to cast shadows
 
-                // Slightly boost the grass material to match stadium lighting
                 if (mesh.material) {
                   const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
                   mats.forEach((mat) => {
                     if (mat instanceof THREE.MeshStandardMaterial) {
-                      mat.roughness  = Math.min(mat.roughness  + 0.05, 1.0);
-                      mat.envMapIntensity = 0.4;
+                      mat.roughness = 0.95;
+                      mat.envMapIntensity = 0.3;
                     }
                   });
                 }
