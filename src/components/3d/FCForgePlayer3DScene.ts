@@ -151,6 +151,10 @@ export class FCForgePlayer3DScene {
     this.ambientLight = new THREE.AmbientLight(0x231F1C, 1.4);
     this.scene.add(this.ambientLight);
 
+    // Natural stadium grass bounce light (illuminates pitch turf and prevents black shadows)
+    const pitchHemisphere = new THREE.HemisphereLight(0xF8F5EE, 0x1f561b, 1.25);
+    this.scene.add(pitchHemisphere);
+
     // Key Light from front-left (Warm off-white #F8F5EE)
     this.keyLight = new THREE.DirectionalLight(0xF8F5EE, 4.4);
     this.keyLight.position.set(-4, 7, 5.5);
@@ -405,92 +409,157 @@ export class FCForgePlayer3DScene {
     }
   }
 
-  // --- Tiled Grass Surface from GRASS3D.glb ---
+  // --- Ultra-Dense Tiled 3D Grass Surface via InstancedMesh (100% Seamless Pitch Coverage) ---
   private loadGrassSurface(path: string): void {
     const loader = new GLTFLoader();
 
-    // Dense full-coverage tiles — no bare ground visible
-    const TILE_COUNT_X = 26;  // columns
-    const TILE_COUNT_Z = 26;  // rows
-    const TILE_SIZE    = 2.0; // wider footprint so tiles pack tight with no gaps
-    const GRASS_HEIGHT_SCALE = 0.12; // crushed height — short mown pitch turf
+    // Dense overlapping honeycomb grid parameters
+    const TILE_COUNT_X = 32;  // columns
+    const TILE_COUNT_Z = 32;  // rows
+    const TOTAL_INSTANCES = TILE_COUNT_X * TILE_COUNT_Z;
+    const SPACING = 1.25;     // tight center-to-center spacing
+    const FOOTPRINT = 2.65;   // wide footprint (2.65 > 1.25 means ~112% overlap, zero gaps!)
 
-    const TOTAL_W = TILE_COUNT_X * TILE_SIZE;
-    const TOTAL_D = TILE_COUNT_Z * TILE_SIZE;
-    const OFFSET_X = -TOTAL_W / 2 + TILE_SIZE / 2;
-    const OFFSET_Z = -TOTAL_D / 2 + TILE_SIZE / 2;
+    const TOTAL_W = TILE_COUNT_X * SPACING;
+    const TOTAL_D = TILE_COUNT_Z * SPACING;
+    const OFFSET_X = -TOTAL_W / 2 + SPACING / 2;
+    const OFFSET_Z = -TOTAL_D / 2 + SPACING / 2;
 
     loader.load(
       path,
       (gltf) => {
-        const templateScene = gltf.scene;
-        const box = new THREE.Box3().setFromObject(templateScene);
+        let grassMesh: THREE.Mesh | null = null;
+        gltf.scene.traverse((child) => {
+          if ((child as THREE.Mesh).isMesh && !grassMesh) {
+            grassMesh = child as THREE.Mesh;
+          }
+        });
+
+        if (!grassMesh) {
+          console.warn('[FCForge] No mesh found in GRASS3D.glb');
+          return;
+        }
+
+        const templateGeometry = grassMesh.geometry.clone();
+        templateGeometry.computeBoundingBox();
+        const box = templateGeometry.boundingBox!;
         const size = new THREE.Vector3();
         box.getSize(size);
+        const center = new THREE.Vector3();
+        box.getCenter(center);
 
-        // Scale horizontal extent to exactly TILE_SIZE
-        const naturalSize = Math.max(size.x, size.z) || 1;
-        const horizScale = TILE_SIZE / naturalSize;
+        // Normalize geometry so bottom roots are exactly at y=0 and centered at (0, 0)
+        templateGeometry.translate(-center.x, -box.min.y, -center.z);
 
-        // Bottom flush at y=0 (using horizontal scale for X/Z, then Y is overridden)
-        const bottomY = box.min.y * horizScale * GRASS_HEIGHT_SCALE;
+        const naturalSize = Math.max(size.x, size.z) || 1.97;
+        const horizScale = FOOTPRINT / naturalSize;
+
+        // Tune grass material for vibrant stadium green and natural floodlight sheen
+        const rawMat = Array.isArray(grassMesh.material) ? grassMesh.material[0] : grassMesh.material;
+        const grassMaterial = rawMat ? rawMat.clone() : new THREE.MeshStandardMaterial();
+        if (grassMaterial instanceof THREE.MeshStandardMaterial) {
+          grassMaterial.roughness = 0.82;
+          grassMaterial.metalness = 0.04;
+          grassMaterial.color.setHex(0x3ea62f); // lush, vibrant stadium grass green
+          grassMaterial.side = THREE.DoubleSide;
+          grassMaterial.needsUpdate = true;
+        }
+
+        // Single high-performance InstancedMesh (1 single draw call for all 1,024 grass tiles!)
+        const instancedGrass = new THREE.InstancedMesh(templateGeometry, grassMaterial, TOTAL_INSTANCES);
+        instancedGrass.receiveShadow = !this.isMobile;
+        instancedGrass.castShadow = false;
+
+        const dummy = new THREE.Object3D();
+        let idx = 0;
 
         for (let row = 0; row < TILE_COUNT_Z; row++) {
+          // Stagger alternate rows (honeycomb brick pattern) to eliminate diagonal seams
+          const rowStagger = (row % 2 === 1) ? SPACING * 0.5 : 0;
+
           for (let col = 0; col < TILE_COUNT_X; col++) {
-            const tile = templateScene.clone(true);
+            const x = OFFSET_X + col * SPACING + rowStagger;
+            const z = OFFSET_Z + row * SPACING;
 
-            // Apply scale: X/Z = tile footprint, Y = crushed height
-            tile.scale.set(horizScale, horizScale * GRASS_HEIGHT_SCALE, horizScale);
+            dummy.position.set(x, 0, z);
 
-            const x = OFFSET_X + col * TILE_SIZE;
-            const z = OFFSET_Z + row * TILE_SIZE;
-            tile.position.set(x, -bottomY, z);
+            // Natural height variation between 0.19 and 0.26 for organic lawn depth
+            const heightVariation = 0.20 + ((row * 13 + col * 7) % 8) * 0.008;
+            dummy.scale.set(horizScale, horizScale * heightVariation, horizScale);
 
-            // 4-way rotation variety to break visual tiling repetition
-            const rotVariants = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
-            tile.rotation.y = rotVariants[(row * TILE_COUNT_X + col) % 4];
+            // Deterministic organic rotation (breaks visual repetition completely)
+            dummy.rotation.y = ((row * 19 + col * 37) % 64) * (Math.PI / 32);
 
-            tile.traverse((child) => {
-              if ((child as THREE.Mesh).isMesh) {
-                const mesh = child as THREE.Mesh;
-                mesh.receiveShadow = true;
-                mesh.castShadow = false; // short grass doesn't need to cast shadows
-
-                if (mesh.material) {
-                  const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-                  mats.forEach((mat) => {
-                    if (mat instanceof THREE.MeshStandardMaterial) {
-                      mat.roughness = 0.95;
-                      mat.envMapIntensity = 0.3;
-                    }
-                  });
-                }
-              }
-            });
-
-            this.grassGroup.add(tile);
+            dummy.updateMatrix();
+            instancedGrass.setMatrixAt(idx, dummy.matrix);
+            idx++;
           }
         }
+
+        instancedGrass.instanceMatrix.needsUpdate = true;
+        this.grassGroup.add(instancedGrass);
+        console.log(`[FCForge] Ultra-dense 3D grass active: ${TOTAL_INSTANCES} instances, 100% field coverage.`);
       },
       undefined,
       (err) => {
-        console.warn('[FCForge] GRASS3D.glb failed to load — keeping dark pitch disc', err);
+        console.warn('[FCForge] GRASS3D.glb failed to load — keeping textured pitch disc', err);
       }
     );
   }
 
-  // --- Pitch Floor Disc (kept as shadow receiver fallback under grass) ---
+  // --- Pitch Floor Disc: Lush Manicured Stadium Lawn Foundation ---
   private createPitchDisc(): THREE.Mesh {
-    const geo = new THREE.CircleGeometry(38, 64); // large enough to cover 52×52 grass grid
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 1024;
+    const ctx = canvas.getContext('2d')!;
+
+    // 1. Rich deep stadium grass base
+    ctx.fillStyle = '#225a1e';
+    ctx.fillRect(0, 0, 1024, 1024);
+
+    // 2. Alternating lawn-mowing stripes (16 wide bands across pitch)
+    const numStripes = 16;
+    const stripeWidth = 1024 / numStripes;
+    for (let i = 0; i < numStripes; i++) {
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(42, 108, 36, 0.42)' : 'rgba(30, 80, 26, 0.42)';
+      ctx.fillRect(0, i * stripeWidth, 1024, stripeWidth);
+    }
+
+    // 3. Dense turf noise & micro grass blade grain
+    const imgData = ctx.getImageData(0, 0, 1024, 1024);
+    const data = imgData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      const noise = (Math.random() - 0.5) * 26;
+      data[i] = Math.max(20, Math.min(65, data[i] + noise * 0.4));       // R
+      data[i + 1] = Math.max(65, Math.min(135, data[i + 1] + noise));   // G (vibrant green)
+      data[i + 2] = Math.max(20, Math.min(65, data[i + 2] + noise * 0.4)); // B
+    }
+    ctx.putImageData(imgData, 0, 0);
+
+    // 4. Fine blade stipples for microscopic grass realism
+    ctx.fillStyle = 'rgba(70, 175, 55, 0.3)';
+    for (let j = 0; j < 9000; j++) {
+      const rx = Math.random() * 1024;
+      const ry = Math.random() * 1024;
+      ctx.fillRect(rx, ry, 1.5, 3.0);
+    }
+
+    const turfTexture = new THREE.CanvasTexture(canvas);
+    turfTexture.wrapS = THREE.RepeatWrapping;
+    turfTexture.wrapT = THREE.RepeatWrapping;
+    turfTexture.repeat.set(12, 12);
+
+    const geo = new THREE.CircleGeometry(46, 64);
     const mat = new THREE.MeshStandardMaterial({
-      color: 0x0A1A08,    // very dark green to blend if grass doesn't load
-      roughness: 0.98,
-      metalness: 0.0,
+      map: turfTexture,
+      roughness: 0.88,
+      metalness: 0.02,
       side: THREE.DoubleSide
     });
     const pitch = new THREE.Mesh(geo, mat);
     pitch.rotation.x = -Math.PI / 2;
-    pitch.position.y = -0.01; // just below y=0 so grass sits on top
+    pitch.position.y = -0.005; // sits immediately below 3D blades
     pitch.receiveShadow = !this.isMobile;
     return pitch;
   }
