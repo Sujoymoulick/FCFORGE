@@ -409,11 +409,11 @@ export class FCForgePlayer3DScene {
   private loadGrassSurface(path: string): void {
     const loader = new GLTFLoader();
 
-    // Small dense tiles — stadium short-cut turf look
-    const TILE_COUNT_X = 16;  // columns
-    const TILE_COUNT_Z = 16;  // rows
-    const TILE_SIZE    = 1.5; // small footprint per tile
-    const GRASS_HEIGHT_SCALE = 0.12; // crush Y — makes blades very short (like mown pitch grass)
+    // Dense full-coverage tiles — no bare ground visible
+    const TILE_COUNT_X = 26;  // columns
+    const TILE_COUNT_Z = 26;  // rows
+    const TILE_SIZE    = 2.0; // wider footprint so tiles pack tight with no gaps
+    const GRASS_HEIGHT_SCALE = 0.12; // crushed height — short mown pitch turf
 
     const TOTAL_W = TILE_COUNT_X * TILE_SIZE;
     const TOTAL_D = TILE_COUNT_Z * TILE_SIZE;
@@ -481,7 +481,7 @@ export class FCForgePlayer3DScene {
 
   // --- Pitch Floor Disc (kept as shadow receiver fallback under grass) ---
   private createPitchDisc(): THREE.Mesh {
-    const geo = new THREE.CircleGeometry(22, 64);
+    const geo = new THREE.CircleGeometry(38, 64); // large enough to cover 52×52 grass grid
     const mat = new THREE.MeshStandardMaterial({
       color: 0x0A1A08,    // very dark green to blend if grass doesn't load
       roughness: 0.98,

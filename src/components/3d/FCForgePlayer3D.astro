@@ -183,11 +183,23 @@ const {
 
               sceneInstance?.setScrollProgress(progress, chapterFloat);
 
-              const currentChapter = sceneInstance?.getCurrentChapter() || Math.round(chapterFloat);
-              if (currentChapter !== lastChapter) {
-                lastChapter = currentChapter;
+              // Determine active chapter based on the section dominating the viewport
+              let activeChapter = 1;
+              for (let i = sectionElements.length - 1; i >= 0; i--) {
+                const el = sectionElements[i];
+                if (el) {
+                  const rect = el.getBoundingClientRect();
+                  if (rect.top <= window.innerHeight * 0.45) {
+                    activeChapter = i + 1;
+                    break;
+                  }
+                }
+              }
+
+              if (activeChapter !== lastChapter) {
+                lastChapter = activeChapter;
                 window.dispatchEvent(
-                  new CustomEvent('fcforge:chapter', { detail: { chapter: currentChapter } })
+                  new CustomEvent('fcforge:chapter', { detail: { chapter: activeChapter } })
                 );
               }
             }

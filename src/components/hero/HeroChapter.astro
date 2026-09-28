@@ -312,10 +312,8 @@
       cards.forEach((card) => {
         const el = card as HTMLElement;
         const depth = el.classList.contains('card-depth-1')
-          ? 14
-          : el.classList.contains('card-depth-2')
-          ? 20
-          : 10;
+          ? 6
+          : 4;
 
         const moveX = currentX * depth;
         const moveY = currentY * depth;
@@ -326,6 +324,20 @@
     };
 
     updateFloatingCards();
+  }
+
+  // Smooth Scroll-Linked Fade for Hero 3D HUD (Leaves Chapter 2 100% Unobstructed)
+  const heroHudContainer = document.getElementById('hero-3d-hud');
+  if (heroHudContainer) {
+    const handleHeroScroll = () => {
+      const scrollY = window.scrollY;
+      const opacity = Math.max(0, 1 - scrollY / 180);
+      heroHudContainer.style.opacity = `${opacity}`;
+      heroHudContainer.style.pointerEvents = opacity <= 0.05 ? 'none' : 'auto';
+      heroHudContainer.style.transform = `translateY(-${Math.min(24, scrollY * 0.12)}px)`;
+    };
+    window.addEventListener('scroll', handleHeroScroll, { passive: true });
+    handleHeroScroll();
   }
 
   // Preset Angle Buttons
