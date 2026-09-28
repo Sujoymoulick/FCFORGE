@@ -16,7 +16,7 @@ const statusBadgeColors: Record<string, string> = {
     <!-- Left Column: Active Tournaments (cols 1-7) -->
     <div class="lg:col-span-7 space-y-8 text-left">
       <!-- Chapter Header (DESIGN.md) -->
-      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[var(--fc-hairline)] pb-6">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[var(--fc-hairline)] pb-6 reveal-up">
         <div class="space-y-3">
           <div class="inline-flex items-center gap-2 px-3 py-1 rounded-[4px] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)] shadow-xs">
             <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-gold)]"></span>
@@ -24,8 +24,8 @@ const statusBadgeColors: Record<string, string> = {
               CHAPTER 04 // TOURNAMENT PORTAL
             </span>
           </div>
-          <h2 class="font-display text-3xl sm:text-5xl font-normal tracking-[-0.03em] text-[#f7f5f0]">
-            Active <span class="font-serif-italic text-[var(--fc-gold)] text-4xl sm:text-6xl">tournaments.</span>
+          <h2 class="text-fluid-section font-display font-normal text-[#f7f5f0]">
+            Active <span class="font-serif-italic text-[var(--fc-gold)] text-fluid-section-italic">tournaments.</span>
           </h2>
         </div>
 
@@ -35,12 +35,12 @@ const statusBadgeColors: Record<string, string> = {
         </a>
       </div>
 
-      <!-- Warp Cards Grid (card-content) -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <!-- Cards: snap-row on mobile, grid on sm+ -->
+      <div class="snap-row sm:grid sm:grid-cols-2 sm:gap-5">
         {MOCK_TOURNAMENTS.slice(0, 4).map(tournament => (
           <a
             href={`/tournaments/${tournament.slug}`}
-            class="p-5 rounded-[6px] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)] hover:border-[var(--fc-hairline-bright)] flex flex-col justify-between group transition-all duration-200"
+            class="reveal-up min-w-[280px] sm:min-w-0 p-5 rounded-[6px] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)] hover:border-[var(--fc-hairline-bright)] flex flex-col justify-between group transition-all duration-200"
           >
             <div class="flex flex-col justify-between h-full space-y-4">
               <!-- Top Tag & Status (DM Mono) -->

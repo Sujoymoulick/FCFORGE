@@ -10,7 +10,7 @@ interface Props {
 }
 
 const {
-  characterModel = '/assets/3d/fcforge-player.glb',
+  characterModel = '/messimodel.glb',
   position = [0, -0.6, 0],
   scale = [1, 1, 1],
   rotation = [0, 0, 0],
@@ -43,7 +43,7 @@ const {
   const canvas = document.getElementById('fcforge-3d-canvas');
   const fallback = document.getElementById('fcforge-3d-fallback');
 
-  const modelPath = wrapper?.parentElement?.dataset.model || wrapper?.getAttribute('data-model') || '/assets/3d/fcforge-player.glb';
+  const modelPath = wrapper?.parentElement?.dataset.model || wrapper?.getAttribute('data-model') || '/messimodel.glb';
 
   let sceneInstance = null;
 

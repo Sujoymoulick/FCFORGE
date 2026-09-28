@@ -46,9 +46,9 @@
           </span>
         </div>
         
-        <h1 class="hero-stagger-2 font-display text-5xl sm:text-6xl lg:text-[4.75rem] font-normal tracking-[-0.035em] text-[#f7f5f0] leading-[1.0] select-text">
+        <h1 class="hero-stagger-2 text-fluid-hero font-display font-normal text-[#f7f5f0] leading-[1.0] select-text">
           FCForge is the <br />
-          <span class="font-serif-italic font-normal text-[var(--fc-gold)] text-5xl sm:text-6xl lg:text-[5.25rem] tracking-[-0.01em]">
+          <span class="font-serif-italic font-normal text-[var(--fc-gold)] text-fluid-section-italic tracking-[-0.01em]">
             football esports arena
           </span> <br />
           built for mobile pros.
@@ -95,14 +95,68 @@
 
     <!-- Right Column: 3D Floating HUD Cards & Interactive Athlete Controller (5 cols desktop) -->
     <!-- Positioned inside the 3D space with depth parallax -->
-    <div class="lg:col-span-5 relative h-full min-h-[460px] pointer-events-auto hidden sm:block select-none">
-      
-      <!-- Interactive Drag Surface (Takes clicks/drags to spin Messi in 3D) -->
-      <div
-        id="hero-3d-interactive-zone"
-        class="absolute inset-0 z-10 cursor-grab active:cursor-grabbing rounded-[8px]"
-        title="Click & Drag horizontally to rotate Lionel Messi 360°"
-      ></div>
+    <div class="lg:col-span-5 relative h-full min-h-[460px] pointer-events-auto select-none">
+
+      <!-- Mobile: Horizontal scroll row of HUD cards (shown only on mobile/tablet) -->
+      <div class="snap-row lg:hidden py-2">
+        <!-- Card: Live Tournament -->
+        <div class="min-w-[220px] p-3 rounded-[6px] bg-[var(--fc-canvas-soft)]/95 border border-[var(--fc-hairline)] shadow-lg pointer-events-auto">
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-[10px] font-mono">
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[2px] bg-[var(--fc-gold)]/10 text-[var(--fc-gold)] font-medium border border-[var(--fc-gold)]/25">
+                <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-gold)] animate-pulse"></span>
+                LIVE ROUND
+              </span>
+              <span class="text-[var(--fc-mute)]">128 PLAYERS</span>
+            </div>
+            <div>
+              <h4 class="font-display font-medium text-xs text-[#f7f5f0] tracking-tight">FCForge Global Cup</h4>
+              <p class="text-[10px] font-mono text-[var(--fc-body)]">eFootball™ Mobile Division I</p>
+            </div>
+            <div class="flex items-center justify-between pt-1.5 border-t border-[var(--fc-hairline)] text-[10px] font-mono">
+              <span class="text-[var(--fc-mute)]">PRIZE POOL</span>
+              <span class="font-medium text-[#f7f5f0]">$25,000 USD</span>
+            </div>
+          </div>
+        </div>
+        <!-- Card: Global Leader -->
+        <div class="min-w-[190px] p-3 rounded-[6px] bg-[var(--fc-canvas-soft)]/95 border border-[var(--fc-hairline)] shadow-lg pointer-events-auto">
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-[10px] font-mono">
+              <span class="text-[var(--fc-mute)] uppercase">GLOBAL LEADER</span>
+              <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-gold)]"></span>
+            </div>
+            <div class="flex items-baseline gap-2">
+              <span class="font-display font-medium text-2xl text-[var(--fc-gold)] tracking-tight">#01</span>
+              <span class="text-xs font-mono text-[#f7f5f0]">1,840 RP</span>
+            </div>
+            <div class="text-[10px] font-mono text-[var(--fc-body)] flex items-center justify-between">
+              <span>WIN RATE</span>
+              <span class="text-[#f7f5f0] font-medium">94.2%</span>
+            </div>
+          </div>
+        </div>
+        <!-- Card: Next Match -->
+        <div class="min-w-[190px] p-3 rounded-[6px] bg-[var(--fc-canvas-soft)]/95 border border-[var(--fc-hairline)] shadow-lg pointer-events-auto">
+          <div class="space-y-1">
+            <div class="flex items-center justify-between text-[10px] font-mono">
+              <span class="text-[var(--fc-gold)] font-medium">NEXT MATCH</span>
+              <span class="px-1.5 py-0.5 rounded-[2px] bg-[var(--fc-canvas)] text-[var(--fc-body)] text-[9px] border border-[var(--fc-hairline)]">GRAND FINALS</span>
+            </div>
+            <div class="font-mono text-lg font-medium text-[#f7f5f0] tracking-wider">08:42</div>
+            <p class="text-[10px] font-mono text-[var(--fc-mute)]">L. MESSI / #10 READY</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Desktop: Absolute floating cards (hidden on mobile) -->
+      <div class="hidden lg:block absolute inset-0">
+        <!-- Interactive Drag Surface -->
+        <div
+          id="hero-3d-interactive-zone"
+          class="absolute inset-0 z-10 cursor-grab active:cursor-grabbing rounded-[8px]"
+          title="Click & Drag horizontally to rotate Lionel Messi 360°"
+        ></div>
 
       <!-- Card 1: Live Tournament Card (Top-Right) -->
       <div
@@ -202,7 +256,8 @@
         </div>
       </div>
 
-    </div>
+      </div> <!-- /desktop floating cards wrapper -->
+    </div> <!-- /right column -->
 
   </div>
 

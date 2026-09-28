@@ -249,7 +249,7 @@ export class FCForgePlayer3DScene {
 
     // 7. Interactive 3D Match Football & Holographic HUD (Chapter 5)
     this.holographicBracket3D = this.create3DHolographicBracket();
-    this.holographicBracket3D.position.set(this.basePlayerX + 0.42, 0.22, 0.32);
+    this.holographicBracket3D.position.set(this.basePlayerX + 0.36, 0.165, 0.28);
     this.holographicBracket3D.visible = true;
     this.scene.add(this.holographicBracket3D);
 
@@ -702,276 +702,283 @@ export class FCForgePlayer3DScene {
     return group;
   }
 
-  // --- 3D Match Football & Holographic Telemetry HUD (Chapter 5) ---
+  // --- Official Al Rihla World Cup Match Ball Textures (Qatar 2022 Speedshell) ---
+  private generateAlRihlaTextures(): { diffuse: THREE.CanvasTexture; bump: THREE.CanvasTexture } {
+    const W = 1024, H = 512;
+    const diffuseCanvas = document.createElement('canvas');
+    diffuseCanvas.width = W;
+    diffuseCanvas.height = H;
+    const diffCtx = diffuseCanvas.getContext('2d')!;
+
+    const bumpCanvas = document.createElement('canvas');
+    bumpCanvas.width = W;
+    bumpCanvas.height = H;
+    const bumpCtx = bumpCanvas.getContext('2d')!;
+
+    const diffImgData = diffCtx.createImageData(W, H);
+    const bumpImgData = bumpCtx.createImageData(W, H);
+    const diffBuf = diffImgData.data;
+    const bumpBuf = bumpImgData.data;
+
+    // 1. Math coordinates for truncated icosahedron 20 Speedshell faces
+    const phi = (1 + Math.sqrt(5)) / 2;
+    const norm = Math.hypot(1, phi);
+    const v12 = [
+      [-1,  phi, 0], [ 1,  phi, 0], [-1, -phi, 0], [ 1, -phi, 0],
+      [ 0, -1,  phi], [ 0,  1,  phi], [ 0, -1, -phi], [ 0,  1, -phi],
+      [ phi, 0, -1], [ phi, 0,  1], [-phi, 0, -1], [-phi, 0,  1]
+    ].map(([x, y, z]) => [x / norm, y / norm, z / norm]);
+
+    const cross = (a: number[], b: number[]) => [
+      a[1] * b[2] - a[2] * b[1],
+      a[2] * b[0] - a[0] * b[2],
+      a[0] * b[1] - a[1] * b[0]
+    ];
+
+    interface SpeedshellFace {
+      idx: number;
+      center: number[];
+      uTan: number[];
+      vTan: number[];
+      edgeNorms: number[][];
+    }
+
+    const faces: SpeedshellFace[] = [];
+    for (let i = 0; i < 12; i++) {
+      for (let j = i + 1; j < 12; j++) {
+        for (let k = j + 1; k < 12; k++) {
+          const d_ij = Math.hypot(v12[i][0] - v12[j][0], v12[i][1] - v12[j][1], v12[i][2] - v12[j][2]);
+          const d_jk = Math.hypot(v12[j][0] - v12[k][0], v12[j][1] - v12[k][1], v12[j][2] - v12[k][2]);
+          const d_ki = Math.hypot(v12[k][0] - v12[i][0], v12[k][1] - v12[i][1], v12[k][2] - v12[i][2]);
+          if (Math.abs(d_ij - 1.05146) < 0.02 && Math.abs(d_jk - 1.05146) < 0.02 && Math.abs(d_ki - 1.05146) < 0.02) {
+            const cx = (v12[i][0] + v12[j][0] + v12[k][0]) / 3;
+            const cy = (v12[i][1] + v12[j][1] + v12[k][1]) / 3;
+            const cz = (v12[i][2] + v12[j][2] + v12[k][2]) / 3;
+            const cnorm = Math.hypot(cx, cy, cz);
+            const center = [cx / cnorm, cy / cnorm, cz / cnorm];
+
+            const n01 = cross(v12[i], v12[j]); const l01 = Math.hypot(...n01);
+            const n12 = cross(v12[j], v12[k]); const l12 = Math.hypot(...n12);
+            const n20 = cross(v12[k], v12[i]); const l20 = Math.hypot(...n20);
+
+            let up = [0, 1, 0];
+            if (Math.abs(center[1]) > 0.88) up = [1, 0, 0];
+            const right = cross(up, center);
+            const rLen = Math.hypot(...right);
+            const uTan = [right[0] / rLen, right[1] / rLen, right[2] / rLen];
+            const vTan = cross(center, uTan);
+
+            faces.push({
+              idx: faces.length,
+              center,
+              uTan,
+              vTan,
+              edgeNorms: [
+                [n01[0] / l01, n01[1] / l01, n01[2] / l01],
+                [n12[0] / l12, n12[1] / l12, n12[2] / l12],
+                [n20[0] / l20, n20[1] / l20, n20[2] / l20]
+              ]
+            });
+          }
+        }
+      }
+    }
+
+    let ptr = 0;
+    for (let y = 0; y < H; y++) {
+      const phiAngle = ((H / 2 - y) / H) * Math.PI;
+      const cosPhi = Math.cos(phiAngle);
+      const sinPhi = Math.sin(phiAngle);
+
+      for (let x = 0; x < W; x++) {
+        const theta = ((x / W) - 0.5) * 2 * Math.PI;
+        const px = cosPhi * Math.sin(theta);
+        const py = sinPhi;
+        const pz = cosPhi * Math.cos(theta);
+
+        // Find nearest Speedshell triangular face
+        let bestDot = -2;
+        let bestFace = faces[0];
+        for (let f = 0; f < faces.length; f++) {
+          const dot = px * faces[f].center[0] + py * faces[f].center[1] + pz * faces[f].center[2];
+          if (dot > bestDot) {
+            bestDot = dot;
+            bestFace = faces[f];
+          }
+        }
+
+        const d0 = Math.abs(px * bestFace.edgeNorms[0][0] + py * bestFace.edgeNorms[0][1] + pz * bestFace.edgeNorms[0][2]);
+        const d1 = Math.abs(px * bestFace.edgeNorms[1][0] + py * bestFace.edgeNorms[1][1] + pz * bestFace.edgeNorms[1][2]);
+        const d2 = Math.abs(px * bestFace.edgeNorms[2][0] + py * bestFace.edgeNorms[2][1] + pz * bestFace.edgeNorms[2][2]);
+        const dMin = Math.min(d0, d1, d2);
+
+        // Aerodynamic feather saw-tooth teeth along the edges
+        const edgeCoord = (d0 === dMin ? px * 0.7 + py * 0.3 : (d1 === dMin ? py * 0.7 + pz * 0.3 : pz * 0.7 + px * 0.3)) * 48;
+        const sawTooth = Math.abs(Math.sin(edgeCoord)) * 0.016;
+        const dMinFeather = dMin - sawTooth;
+
+        let r = 248, g = 250, b = 253; // Pristine pearl white polyurethane skin
+        let bump = 180; // Default surface elevation
+
+        // Micro-dimple golf ball texture for realistic grip
+        const microDimple = Math.sin(px * 160) * Math.sin(py * 160 + pz * 160);
+        bump += microDimple * 7;
+
+        if (dMin < 0.007) {
+          // Debossed thermal-bonded seam groove
+          r = 90; g = 105; b = 125;
+          bump = 35;
+        } else if (dMin < 0.013) {
+          // Seam bevel gradient
+          r = 170; g = 185; b = 205;
+          bump = 110;
+        } else if (dMin < 0.034) {
+          // Electric cyan & deep royal blue primary band
+          const t = (dMin - 0.013) / 0.021;
+          r = Math.round(10 * (1 - t) + 0 * t);
+          g = Math.round(40 * (1 - t) + 215 * t);
+          b = Math.round(150 * (1 - t) + 255 * t);
+          bump = 175;
+        } else if (dMinFeather < 0.082) {
+          // Fiery rainbow speed spearhead: Magenta -> Red -> Orange -> Yellow -> Green-Cyan
+          const t = Math.max(0, Math.min(1, (dMinFeather - 0.034) / 0.048));
+          if (t < 0.3) {
+            const st = t / 0.3;
+            r = Math.round(220 * (1 - st) + 255 * st);
+            g = Math.round(0 * (1 - st) + 20 * st);
+            b = Math.round(130 * (1 - st) + 60 * st);
+          } else if (t < 0.6) {
+            const st = (t - 0.3) / 0.3;
+            r = 255;
+            g = Math.round(20 * (1 - st) + 130 * st);
+            b = Math.round(60 * (1 - st) + 10 * st);
+          } else if (t < 0.88) {
+            const st = (t - 0.6) / 0.28;
+            r = 255;
+            g = Math.round(130 * (1 - st) + 215 * st);
+            b = Math.round(10 * (1 - st) + 0 * st);
+          } else {
+            const st = (t - 0.88) / 0.12;
+            r = Math.round(255 * (1 - st) + 0 * st);
+            g = Math.round(215 * (1 - st) + 230 * st);
+            b = Math.round(0 * (1 - st) + 220 * st);
+          }
+        } else if (dMin < 0.13) {
+          // Frequency speed dashes shooting towards center
+          const dashFreq = Math.sin(edgeCoord * 2.2);
+          if (dashFreq > 0.35 && (dMin < 0.11 || dashFreq > 0.7)) {
+            if (Math.sin(edgeCoord * 0.8) > 0) {
+              r = 0; g = 140; b = 240;
+            } else {
+              r = 255; g = 80; b = 40;
+            }
+          }
+        }
+
+        // Decals on selected panels
+        const uFace = px * bestFace.uTan[0] + py * bestFace.uTan[1] + pz * bestFace.uTan[2];
+        const vFace = px * bestFace.vTan[0] + py * bestFace.vTan[1] + pz * bestFace.vTan[2];
+
+        // Panel 0: Adidas 3-Bars Diagonal Performance Logo
+        if (bestFace.idx === 0) {
+          const cos45 = 0.7071, sin45 = 0.7071;
+          const rx = (uFace * cos45 - vFace * sin45) + 0.02;
+          const ry = (uFace * sin45 + vFace * cos45);
+          const inBar1 = (rx >= -0.065 && rx <= -0.038 && ry >= -0.025 && ry <= 0.035);
+          const inBar2 = (rx >= -0.018 && rx <= 0.009 && ry >= -0.045 && ry <= 0.065);
+          const inBar3 = (rx >= 0.029 && rx <= 0.056 && ry >= -0.065 && ry <= 0.095);
+          if (inBar1 || inBar2 || inBar3) {
+            r = 15; g = 17; b = 22;
+          }
+        }
+
+        // Panel 1: Qatar 2022 World Cup Ribbon Emblem + Text
+        if (bestFace.idx === 1) {
+          const ribbonDist1 = Math.hypot(uFace, vFace - 0.05);
+          const ribbonDist2 = Math.hypot(uFace, vFace + 0.01);
+          const onLoop1 = Math.abs(ribbonDist1 - 0.035) < 0.008;
+          const onLoop2 = Math.abs(ribbonDist2 - 0.038) < 0.008;
+          if (onLoop1 || onLoop2) {
+            r = 20; g = 24; b = 30;
+          }
+          if (Math.abs(uFace) < 0.065 && vFace >= -0.07 && vFace <= -0.035) {
+            if (Math.sin(vFace * 400) > 0.1 && Math.sin(uFace * 300) > 0.0) {
+              r = 25; g = 30; b = 38;
+            }
+          }
+        }
+
+        // Panel 2: Speedshell Technical Blueprint Triangle
+        if (bestFace.idx === 2) {
+          const triD = Math.min(d0, d1, d2);
+          if (Math.abs(triD - 0.12) < 0.004) {
+            r = 180; g = 195; b = 210;
+          }
+        }
+
+        diffBuf[ptr] = r;
+        diffBuf[ptr + 1] = g;
+        diffBuf[ptr + 2] = b;
+        diffBuf[ptr + 3] = 255;
+
+        bumpBuf[ptr] = bump;
+        bumpBuf[ptr + 1] = bump;
+        bumpBuf[ptr + 2] = bump;
+        bumpBuf[ptr + 3] = 255;
+
+        ptr += 4;
+      }
+    }
+
+    diffCtx.putImageData(diffImgData, 0, 0);
+    bumpCtx.putImageData(bumpImgData, 0, 0);
+
+    const diffuse = new THREE.CanvasTexture(diffuseCanvas);
+    diffuse.colorSpace = THREE.SRGBColorSpace;
+    diffuse.wrapS = THREE.RepeatWrapping;
+    diffuse.wrapT = THREE.ClampToEdgeWrapping;
+
+    const bump = new THREE.CanvasTexture(bumpCanvas);
+    bump.wrapS = THREE.RepeatWrapping;
+    bump.wrapT = THREE.ClampToEdgeWrapping;
+
+    return { diffuse, bump };
+  }
+
+  // --- 3D Al Rihla Official World Cup Match Ball & Telemetry (Chapter 5) ---
   private create3DHolographicBracket(): THREE.Group {
     const rootGroup = new THREE.Group();
 
-    // 1. Math coordinates for truncated icosahedron (12 pentagons, 20 hexagons, 60 vertices)
-    const phi = (1 + Math.sqrt(5)) / 2;
-    const rawVerts: number[][] = [];
-    const addPerms = (a: number, b: number, c: number) => {
-      const perms = [[a, b, c], [b, c, a], [c, a, b]];
-      for (const [x, y, z] of perms) {
-        for (const sx of (x === 0 ? [0] : [-1, 1])) {
-          for (const sy of (y === 0 ? [0] : [-1, 1])) {
-            for (const sz of (z === 0 ? [0] : [-1, 1])) {
-              const pt = [sx * Math.abs(x), sy * Math.abs(y), sz * Math.abs(z)];
-              if (!rawVerts.some(v => Math.hypot(v[0] - pt[0], v[1] - pt[1], v[2] - pt[2]) < 1e-4)) {
-                rawVerts.push(pt);
-              }
-            }
-          }
-        }
-      }
-    };
-    addPerms(0, 1, 3 * phi);
-    addPerms(2, 1 + 2 * phi, phi);
-    addPerms(1, 2 + phi, 2 * phi);
+    // Perfectly sized radius (compact, realistic match ball proportion)
+    const radius = 0.165;
 
-    const adj: number[][] = Array.from({ length: 60 }, () => []);
-    for (let i = 0; i < 60; i++) {
-      for (let j = i + 1; j < 60; j++) {
-        const d = Math.hypot(rawVerts[i][0] - rawVerts[j][0], rawVerts[i][1] - rawVerts[j][1], rawVerts[i][2] - rawVerts[j][2]);
-        if (Math.abs(d - 2) < 1e-3) {
-          adj[i].push(j);
-          adj[j].push(i);
-        }
-      }
-    }
+    // Generate high-resolution Al Rihla Speedshell textures
+    const textures = this.generateAlRihlaTextures();
 
-    const orderCycle = (cycle: number[]) => {
-      const ordered = [cycle[0]];
-      const rem = new Set(cycle.slice(1));
-      while (rem.size > 0) {
-        const curr = ordered[ordered.length - 1];
-        let next: number | null = null;
-        for (const cand of rem) {
-          if (adj[curr].includes(cand)) {
-            next = cand;
-            break;
-          }
-        }
-        if (next !== null) {
-          ordered.push(next);
-          rem.delete(next);
-        } else {
-          break;
-        }
-      }
-      const N = cycle.length;
-      const cx = ordered.reduce((s, idx) => s + rawVerts[idx][0], 0) / N;
-      const cy = ordered.reduce((s, idx) => s + rawVerts[idx][1], 0) / N;
-      const cz = ordered.reduce((s, idx) => s + rawVerts[idx][2], 0) / N;
-      const v0 = rawVerts[ordered[0]], v1 = rawVerts[ordered[1]];
-      const e0 = [v0[0] - cx, v0[1] - cy, v0[2] - cz];
-      const e1 = [v1[0] - cx, v1[1] - cy, v1[2] - cz];
-      const cross = [
-        e0[1] * e1[2] - e0[2] * e1[1],
-        e0[2] * e1[0] - e0[0] * e1[2],
-        e0[0] * e1[1] - e0[1] * e1[0]
-      ];
-      const dot = cross[0] * cx + cross[1] * cy + cross[2] * cz;
-      if (dot < 0) ordered.reverse();
-      return ordered;
-    };
+    // 1. Pristine Smooth Match Ball Sphere
+    const ballGeo = new THREE.SphereGeometry(radius, 64, 48);
+    const ballMat = new THREE.MeshStandardMaterial({
+      map: textures.diffuse,
+      bumpMap: textures.bump,
+      bumpScale: 0.016,
+      roughness: 0.22,
+      metalness: 0.14,
+      envMapIntensity: 1.15
+    });
+    const ballMesh = new THREE.Mesh(ballGeo, ballMat);
+    ballMesh.castShadow = true;
+    ballMesh.receiveShadow = true;
 
-    const pentagons: number[][] = [];
-    const seenPent = new Set<string>();
-    for (let i = 0; i < 60; i++) {
-      for (const j of adj[i]) {
-        for (const k of adj[j]) {
-          if (k === i) continue;
-          for (const l of adj[k]) {
-            if (l === j || l === i) continue;
-            for (const m of adj[l]) {
-              if (m === k || m === j || m === i) continue;
-              if (adj[m].includes(i)) {
-                const cycle = [i, j, k, l, m];
-                const sorted = [...cycle].sort((a, b) => a - b).join(',');
-                if (!seenPent.has(sorted)) {
-                  seenPent.add(sorted);
-                  pentagons.push(orderCycle(cycle));
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    const hexagons: number[][] = [];
-    const seenHex = new Set<string>();
-    for (let i = 0; i < 60; i++) {
-      for (const j of adj[i]) {
-        for (const k of adj[j]) {
-          if (k === i) continue;
-          for (const l of adj[k]) {
-            if (l === j || l === i) continue;
-            for (const m of adj[l]) {
-              if (m === k || m === j || m === i) continue;
-              for (const n of adj[m]) {
-                if (n === l || n === k || n === j || n === i) continue;
-                if (adj[n].includes(i)) {
-                  const cycle = [i, j, k, l, m, n];
-                  const cx = cycle.reduce((s, idx) => s + rawVerts[idx][0], 0) / 6;
-                  const cy = cycle.reduce((s, idx) => s + rawVerts[idx][1], 0) / 6;
-                  const cz = cycle.reduce((s, idx) => s + rawVerts[idx][2], 0) / 6;
-                  if (Math.hypot(cx, cy, cz) < 4.6) {
-                    const sorted = [...cycle].sort((a, b) => a - b).join(',');
-                    if (!seenHex.has(sorted)) {
-                      seenHex.add(sorted);
-                      hexagons.push(orderCycle(cycle));
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    const radius = 0.26;
-    const insetFactor = 0.052;
-    const puffFactor = 1.028;
-
-    const buildPanelGeometry = (faces: number[][]) => {
-      const positions: number[] = [];
-      for (const face of faces) {
-        const N = face.length;
-        let cx = 0, cy = 0, cz = 0;
-        for (const idx of face) {
-          cx += rawVerts[idx][0];
-          cy += rawVerts[idx][1];
-          cz += rawVerts[idx][2];
-        }
-        const cNorm = Math.hypot(cx, cy, cz);
-        const cUnit = [cx / cNorm, cy / cNorm, cz / cNorm];
-        const cPuff = [
-          cUnit[0] * radius * puffFactor,
-          cUnit[1] * radius * puffFactor,
-          cUnit[2] * radius * puffFactor
-        ];
-
-        const insets: number[][] = [];
-        const baseInsets: number[][] = [];
-        for (let k = 0; k < N; k++) {
-          const v = rawVerts[face[k]];
-          const vNorm = Math.hypot(...v);
-          const vUnit = [v[0] / vNorm, v[1] / vNorm, v[2] / vNorm];
-          const ix = (vUnit[0] * (1 - insetFactor) + cUnit[0] * insetFactor) * radius;
-          const iy = (vUnit[1] * (1 - insetFactor) + cUnit[1] * insetFactor) * radius;
-          const iz = (vUnit[2] * (1 - insetFactor) + cUnit[2] * insetFactor) * radius;
-          insets.push([ix, iy, iz]);
-          baseInsets.push([
-            vUnit[0] * radius * 0.984,
-            vUnit[1] * radius * 0.984,
-            vUnit[2] * radius * 0.984
-          ]);
-        }
-
-        for (let k = 0; k < N; k++) {
-          const next = (k + 1) % N;
-          // Top cushion triangle
-          positions.push(...cPuff, ...insets[k], ...insets[next]);
-          // Side bevels descending into the recessed seam channel
-          positions.push(...insets[k], ...baseInsets[k], ...baseInsets[next]);
-          positions.push(...insets[k], ...baseInsets[next], ...insets[next]);
-        }
-      }
-
-      const geo = new THREE.BufferGeometry();
-      geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-      geo.computeVertexNormals();
-      return geo;
-    };
-
-    // 2. Football Mesh Assembly
     const footballGroup = new THREE.Group();
-
-    // 2A. Recessed Dark Seam Core Sphere
-    const coreGeo = new THREE.SphereGeometry(radius * 0.982, 32, 24);
-    const coreMat = new THREE.MeshStandardMaterial({
-      color: 0x0A0B0E,
-      roughness: 0.92,
-      metalness: 0.05
-    });
-    const coreMesh = new THREE.Mesh(coreGeo, coreMat);
-    footballGroup.add(coreMesh);
-
-    // 2B. Pentagon Panels (Midnight Obsidian Carbon)
-    const pentGeo = buildPanelGeometry(pentagons);
-    const pentMat = new THREE.MeshStandardMaterial({
-      color: 0x14161C,
-      roughness: 0.28,
-      metalness: 0.25
-    });
-    const pentMesh = new THREE.Mesh(pentGeo, pentMat);
-    pentMesh.castShadow = true;
-    footballGroup.add(pentMesh);
-
-    // 2C. Hexagon Panels (Pearl White Luxury Leather)
-    const hexGeo = buildPanelGeometry(hexagons);
-    const hexMat = new THREE.MeshStandardMaterial({
-      color: 0xF7F8FA,
-      roughness: 0.24,
-      metalness: 0.12
-    });
-    const hexMesh = new THREE.Mesh(hexGeo, hexMat);
-    hexMesh.castShadow = true;
-    footballGroup.add(hexMesh);
-
-    // 2D. Gold Insignia on Equator Pentagons (FCForge Championship Accent)
-    const goldCrestPositions: number[] = [];
-    for (let pIdx = 0; pIdx < Math.min(4, pentagons.length); pIdx++) {
-      const face = pentagons[pIdx];
-      let cx = 0, cy = 0, cz = 0;
-      for (const idx of face) {
-        cx += rawVerts[idx][0];
-        cy += rawVerts[idx][1];
-        cz += rawVerts[idx][2];
-      }
-      const cNorm = Math.hypot(cx, cy, cz);
-      const cUnit = [cx / cNorm, cy / cNorm, cz / cNorm];
-      const crestPuff = [cUnit[0] * radius * 1.032, cUnit[1] * radius * 1.032, cUnit[2] * radius * 1.032];
-      for (let k = 0; k < 5; k++) {
-        const next = (k + 1) % 5;
-        const v1 = rawVerts[face[k]], v2 = rawVerts[face[next]];
-        const v1Norm = Math.hypot(...v1), v2Norm = Math.hypot(...v2);
-        const p1 = [
-          (v1[0] / v1Norm * 0.42 + cUnit[0] * 0.58) * radius * 1.03,
-          (v1[1] / v1Norm * 0.42 + cUnit[1] * 0.58) * radius * 1.03,
-          (v1[2] / v1Norm * 0.42 + cUnit[2] * 0.58) * radius * 1.03
-        ];
-        const p2 = [
-          (v2[0] / v2Norm * 0.42 + cUnit[0] * 0.58) * radius * 1.03,
-          (v2[1] / v2Norm * 0.42 + cUnit[1] * 0.58) * radius * 1.03,
-          (v2[2] / v2Norm * 0.42 + cUnit[2] * 0.58) * radius * 1.03
-        ];
-        goldCrestPositions.push(...crestPuff, ...p1, ...p2);
-      }
-    }
-    const goldCrestGeo = new THREE.BufferGeometry();
-    goldCrestGeo.setAttribute('position', new THREE.Float32BufferAttribute(goldCrestPositions, 3));
-    goldCrestGeo.computeVertexNormals();
-    const goldCrestMat = new THREE.MeshStandardMaterial({
-      color: 0xE5B869,
-      metalness: 0.95,
-      roughness: 0.15,
-      emissive: 0x332200,
-      emissiveIntensity: 0.25
-    });
-    const goldCrestMesh = new THREE.Mesh(goldCrestGeo, goldCrestMat);
-    footballGroup.add(goldCrestMesh);
-
+    footballGroup.add(ballMesh);
     this.matchFootballMesh = footballGroup;
     rootGroup.add(footballGroup);
 
-    // 3. Holographic Bracket Telemetry Orbit Rings (Active during Chapter 5)
+    // 2. Holographic Bracket Telemetry Orbit Rings (Active during Chapter 5)
     const hudGroup = new THREE.Group();
 
-    // 3A. Outer Gold Gimbal Orbit Ring
-    const outerRingGeo = new THREE.TorusGeometry(radius * 1.48, 0.0032, 16, 64);
+    // 2A. Outer Gold Gimbal Orbit Ring
+    const outerRingGeo = new THREE.TorusGeometry(radius * 1.34, 0.0022, 16, 64);
     const outerRingMat = new THREE.MeshBasicMaterial({
       color: 0xE5B869,
       transparent: true,
@@ -982,8 +989,8 @@ export class FCForgePlayer3DScene {
     this.matchOrbitRing.rotation.x = Math.PI / 3;
     hudGroup.add(this.matchOrbitRing);
 
-    // 3B. Inner Cyan Telemetry Ring
-    const innerRingGeo = new THREE.TorusGeometry(radius * 1.30, 0.0022, 16, 64);
+    // 2B. Inner Cyan Telemetry Ring
+    const innerRingGeo = new THREE.TorusGeometry(radius * 1.18, 0.0016, 16, 64);
     const innerRingMat = new THREE.MeshBasicMaterial({
       color: 0x00E5FF,
       transparent: true,
@@ -994,14 +1001,14 @@ export class FCForgePlayer3DScene {
     this.matchOrbitRingInner.rotation.y = Math.PI / 4;
     hudGroup.add(this.matchOrbitRingInner);
 
-    // 3C. Holographic Corner Bracket Reticles (Replacing wireframe box with precision telemetry)
+    // 2C. Holographic Corner Bracket Reticles
     const cornerMat = new THREE.LineBasicMaterial({
       color: 0xE5B869,
       transparent: true,
-      opacity: 0.75
+      opacity: 0.7
     });
-    const bracketSize = radius * 1.5;
-    const cornerArm = 0.08;
+    const bracketSize = radius * 1.35;
+    const cornerArm = 0.05;
     const corners = [
       [-bracketSize, -bracketSize],
       [bracketSize, -bracketSize],
@@ -1021,9 +1028,9 @@ export class FCForgePlayer3DScene {
       hudGroup.add(cornerLine);
     });
 
-    // 3D. Warm Ambient Telemetry Beacon Light
-    const beaconLight = new THREE.PointLight(0xE5B869, 1.2, 2.5);
-    beaconLight.position.set(0, 0, 0.2);
+    // 2D. Subtle Cyan/Gold Ambient Telemetry Beacon Light
+    const beaconLight = new THREE.PointLight(0x00E5FF, 1.0, 2.0);
+    beaconLight.position.set(0, 0, 0.15);
     hudGroup.add(beaconLight);
 
     rootGroup.add(hudGroup);
@@ -1533,20 +1540,20 @@ export class FCForgePlayer3DScene {
 
     if (this.currentChapterFloat < 4.2) {
       // Resting on turf beside the player's front cleat
-      targetBallX = this.playerGroup.position.x + (isMob ? 0.28 : 0.42);
-      targetBallY = 0.22;
-      targetBallZ = this.playerGroup.position.z + 0.32;
+      targetBallX = this.playerGroup.position.x + (isMob ? 0.22 : 0.36);
+      targetBallY = 0.165;
+      targetBallZ = this.playerGroup.position.z + 0.28;
     } else if (this.currentChapterFloat >= 4.2 && this.currentChapterFloat <= 5.8) {
       // Levitating up into the Chapter 5 Competition Engine spotlight
-      const hoverBob = Math.sin(elapsed * 2.2) * 0.04;
-      targetBallX = this.playerGroup.position.x + (isMob ? 0.0 : 0.72);
-      targetBallY = 1.05 + hoverBob;
-      targetBallZ = 0.32;
+      const hoverBob = Math.sin(elapsed * 2.2) * 0.03;
+      targetBallX = this.playerGroup.position.x + (isMob ? 0.0 : 0.60);
+      targetBallY = 1.02 + hoverBob;
+      targetBallZ = 0.30;
     } else {
       // Resting on pitch near leaderboard / trophy podium
-      targetBallX = this.playerGroup.position.x + (isMob ? 0.28 : 0.42);
-      targetBallY = 0.22;
-      targetBallZ = this.playerGroup.position.z + 0.30;
+      targetBallX = this.playerGroup.position.x + (isMob ? 0.22 : 0.36);
+      targetBallY = 0.165;
+      targetBallZ = this.playerGroup.position.z + 0.26;
     }
 
     this.holographicBracket3D.position.x += (targetBallX - this.holographicBracket3D.position.x) * 0.085;

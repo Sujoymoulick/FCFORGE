@@ -48,10 +48,10 @@ const newsItems = [
       </a>
     </div>
 
-    <!-- News Grid (DESIGN.md card-content) -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+    <!-- News Grid: 1 col → 2 col tablet → 3 col desktop -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
       {newsItems.map(item => (
-        <a href="/tournaments" class="p-4 rounded-[6px] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)] hover:border-[var(--fc-hairline-bright)] flex flex-col justify-between group transition-all duration-200">
+        <a href="/tournaments" class="reveal-up p-4 rounded-[6px] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)] hover:border-[var(--fc-hairline-bright)] flex flex-col justify-between group transition-all duration-200">
           <div class="space-y-3">
             <!-- Article Image Cover -->
             <div class="relative h-40 w-full overflow-hidden rounded-[4px] bg-[var(--fc-canvas)] border border-[var(--fc-hairline)]">

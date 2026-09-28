@@ -53,14 +53,14 @@ const navItems = [
 </header>
 
 <!-- Mobile Floating Nav Bar -->
-<nav class="md:hidden fixed bottom-3 left-3 right-3 z-50 bg-[var(--fc-canvas)]/95 border border-[var(--fc-hairline)] backdrop-blur-2xl rounded-lg px-2 py-1.5 shadow-2xl">
+<nav class="mobile-bottom-nav md:hidden fixed bottom-3 left-3 right-3 z-50 bg-[var(--fc-canvas)]/95 border border-[var(--fc-hairline)] backdrop-blur-2xl rounded-lg px-2 py-1.5 shadow-2xl">
   <div class="flex items-center justify-around">
     {navItems.map(item => {
       const isActive = currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href));
       return (
         <a
           href={item.href}
-          class={`flex flex-col items-center gap-0.5 px-2.5 py-1 rounded-[4px] text-[11px] font-medium tracking-tight transition-colors ${
+          class={`flex flex-col items-center gap-0.5 px-2.5 py-2 min-h-[44px] justify-center rounded-[4px] text-[11px] font-medium tracking-tight transition-colors ${
             isActive ? 'text-[#f7f5f0] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)]' : 'text-[var(--fc-mute)] hover:text-[#f7f5f0]'
           }`}
         >
