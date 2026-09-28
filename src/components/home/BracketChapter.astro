@@ -4,58 +4,66 @@ import { MOCK_TOURNAMENTS } from '../../data/mock/tournaments';
 const liveBracket = MOCK_TOURNAMENTS[0]?.matchBracket;
 ---
 
-<section id="chapter-compete" class="relative min-h-[90dvh] flex flex-col justify-center px-4 sm:px-8 py-20 sm:py-28">
-  <div class="max-w-6xl mx-auto w-full relative z-20 space-y-10">
-    <!-- Chapter Header (DESIGN.md) -->
-    <div class="text-center space-y-3 max-w-2xl mx-auto">
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-[4px] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)] shadow-xs">
-        <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-gold)]"></span>
-        <span class="text-[11px] font-mono font-medium tracking-tight text-[var(--fc-primary)] uppercase">
-          CHAPTER 05 // COMPETITION ENGINE
-        </span>
-      </div>
-      <h2 class="font-display text-3xl sm:text-5xl font-normal tracking-[-0.03em] text-[#f7f5f0]">
-        Real-time <span class="font-serif-italic text-[var(--fc-gold)] text-4xl sm:text-6xl">match engine.</span>
-      </h2>
-      <p class="text-sm text-[var(--fc-body)] font-normal max-w-xl mx-auto">
-        Live tournament progression engine. Track head-to-head scorelines, penalty shootouts, and bracket advances in real time.
-      </p>
+<section id="chapter-compete" class="relative min-h-[90dvh] flex flex-col justify-center px-4 sm:px-8 py-20 sm:py-28 overflow-hidden">
+  <div class="max-w-7xl mx-auto w-full relative z-20 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+    
+    <!-- Left Column: Open Blank Spot for 3D Athlete & Holographic Rings (cols 1-5) -->
+    <div class="hidden lg:block lg:col-span-5 pointer-events-none">
+      <!-- 3D athlete smoothly glides here into this open spatial zone -->
     </div>
 
-    <!-- 4-Stage Progression Bar (DESIGN.md) -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 max-w-4xl mx-auto text-center font-mono text-xs">
-      {[
-        { step: '01', title: 'ROUND OF 16', status: 'completed' },
-        { step: '02', title: 'QUARTERFINAL', status: 'completed' },
-        { step: '03', title: 'SEMIFINAL', status: 'current' },
-        { step: '04', title: 'GRAND FINAL', status: 'upcoming' }
-      ].map(item => (
-        <div class={`p-3 rounded-[4px] border transition-all duration-200 ${
-          item.status === 'current'
-            ? 'bg-[var(--fc-canvas-subtle)] border-[var(--fc-gold)] text-[var(--fc-gold)] shadow-xs'
-            : item.status === 'completed'
-            ? 'bg-[var(--fc-canvas-soft)] border-[var(--fc-hairline)] text-[#f7f5f0]'
-            : 'bg-[var(--fc-canvas)] border-[var(--fc-hairline)] text-[var(--fc-mute)]'
-        }`}>
-          <span class="block text-[10px] text-[var(--fc-mute)] mb-0.5">STAGE {item.step}</span>
-          <span class="text-xs font-medium">{item.title}</span>
-        </div>
-      ))}
-    </div>
-
-    <!-- Live Bracket Engine Showcase (card-mockup) -->
-    {liveBracket && (
-      <div class="p-5 sm:p-6 rounded-[6px] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)] max-w-5xl mx-auto space-y-6">
-        <div class="flex items-center justify-between border-b border-[var(--fc-hairline)] pb-3">
-          <span class="font-display font-medium text-sm text-[#f7f5f0] flex items-center gap-2 tracking-tight">
-            <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>
-            FCFORGE GLOBAL CUP — LIVE MATCH TELEMETRY
+    <!-- Right Column: Live Match Engine (cols 6-12) -->
+    <div class="lg:col-span-7 space-y-8 text-left">
+      <!-- Chapter Header (DESIGN.md) -->
+      <div class="space-y-3">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-[4px] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)] shadow-xs">
+          <span class="w-1.5 h-1.5 rounded-full bg-[var(--fc-gold)]"></span>
+          <span class="text-[11px] font-mono font-medium tracking-tight text-[var(--fc-primary)] uppercase">
+            CHAPTER 05 // COMPETITION ENGINE
           </span>
-          <span class="text-xs font-mono text-[var(--fc-gold)] font-medium">STAGE: SEMIFINALS</span>
         </div>
+        <h2 class="font-display text-3xl sm:text-5xl font-normal tracking-[-0.03em] text-[#f7f5f0]">
+          Real-time <span class="font-serif-italic text-[var(--fc-gold)] text-4xl sm:text-6xl">match engine.</span>
+        </h2>
+        <p class="text-sm text-[var(--fc-body)] font-normal max-w-xl leading-relaxed">
+          Live tournament progression engine. Track head-to-head scorelines, penalty shootouts, and bracket advances in real time.
+        </p>
+      </div>
 
-        <!-- 3-Column Bracket Display -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 items-center">
+      <!-- 4-Stage Progression Bar (DESIGN.md) -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-mono text-xs">
+        {[
+          { step: '01', title: 'R16', status: 'completed' },
+          { step: '02', title: 'QUARTERS', status: 'completed' },
+          { step: '03', title: 'SEMIS', status: 'current' },
+          { step: '04', title: 'FINALS', status: 'upcoming' }
+        ].map(item => (
+          <div class={`p-2.5 rounded-[4px] border transition-all duration-200 ${
+            item.status === 'current'
+              ? 'bg-[var(--fc-canvas-subtle)] border-[var(--fc-gold)] text-[var(--fc-gold)] shadow-xs'
+              : item.status === 'completed'
+              ? 'bg-[var(--fc-canvas-soft)] border-[var(--fc-hairline)] text-[#f7f5f0]'
+              : 'bg-[var(--fc-canvas)] border-[var(--fc-hairline)] text-[var(--fc-mute)]'
+          }`}>
+            <span class="block text-[9px] text-[var(--fc-mute)] mb-0.5">STAGE {item.step}</span>
+            <span class="text-xs font-medium">{item.title}</span>
+          </div>
+        ))}
+      </div>
+
+      <!-- Live Bracket Engine Showcase (card-mockup) -->
+      {liveBracket && (
+        <div class="p-5 sm:p-6 rounded-[6px] bg-[var(--fc-canvas-soft)] border border-[var(--fc-hairline)] space-y-5">
+          <div class="flex items-center justify-between border-b border-[var(--fc-hairline)] pb-3">
+            <span class="font-display font-medium text-xs sm:text-sm text-[#f7f5f0] flex items-center gap-2 tracking-tight">
+              <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+              LIVE BRACKET TELEMETRY
+            </span>
+            <span class="text-[11px] font-mono text-[var(--fc-gold)] font-medium">SEMIFINALS</span>
+          </div>
+
+          <!-- 3-Column Compact Bracket Display -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
           <!-- Quarterfinals Column -->
           <div class="space-y-3">
             <span class="block text-[10px] font-mono text-[var(--fc-mute)] uppercase border-b border-[var(--fc-hairline)] pb-1">
@@ -115,5 +123,7 @@ const liveBracket = MOCK_TOURNAMENTS[0]?.matchBracket;
         </div>
       </div>
     )}
+    </div>
+
   </div>
 </section>

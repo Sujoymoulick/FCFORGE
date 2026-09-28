@@ -39,6 +39,10 @@ export class ChampionshipTrophyScene {
   private rotationVelocityY = 0.008; // Gentle auto-rotation
   private flareIntensity = 0;
 
+  // Viewport Visibility & Observer
+  private isVisible = false;
+  private observer: IntersectionObserver | null = null;
+
   constructor(options: ChampionshipTrophySceneOptions) {
     this.canvas = options.canvas;
     this.container = options.container;
@@ -55,7 +59,7 @@ export class ChampionshipTrophyScene {
     this.camera.position.set(0, 0.95, 3.2);
     this.camera.lookAt(0, 0.72, 0);
 
-    // 3. Renderer with transparency and filmic tone mapping
+    // 3. Renderer with transparency and filmic tone mapping (Capped DPR for high-performance)
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
       antialias: true,
@@ -63,7 +67,7 @@ export class ChampionshipTrophyScene {
       powerPreference: 'high-performance'
     });
     this.renderer.setSize(width, height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.35;
 
@@ -84,8 +88,21 @@ export class ChampionshipTrophyScene {
     // 7. Interactive Event Listeners
     this.bindEvents();
 
-    // 8. Start Render Loop
-    this.animate();
+    // 8. Viewport Intersection Observer (Only render when visible on screen)
+    if (typeof IntersectionObserver !== 'undefined') {
+      this.observer = new IntersectionObserver((entries) => {
+        const isIntersecting = entries[0]?.isIntersecting ?? false;
+        this.isVisible = isIntersecting;
+        if (this.isVisible && this.animId === null) {
+          this.clock.start();
+          this.animate();
+        }
+      }, { threshold: 0.05 });
+      this.observer.observe(this.container);
+    } else {
+      this.isVisible = true;
+      this.animate();
+    }
 
     if (options.onReady) {
       options.onReady();
@@ -443,7 +460,7 @@ export class ChampionshipTrophyScene {
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
   };
 
   // --- Public Interactive Commands ---
@@ -464,8 +481,13 @@ export class ChampionshipTrophyScene {
     }
   }
 
-  // --- Main Animation Loop ---
+  // --- Main Animation Loop (Throttled by Viewport Visibility) ---
   private animate = () => {
+    if (!this.isVisible) {
+      this.animId = null;
+      return;
+    }
+
     this.animId = requestAnimationFrame(this.animate);
 
     const delta = this.clock.getDelta();
@@ -533,6 +555,7 @@ export class ChampionshipTrophyScene {
     if (this.animId !== null) {
       cancelAnimationFrame(this.animId);
     }
+    this.observer?.disconnect();
     this.canvas.removeEventListener('pointerdown', this.onPointerDown);
     window.removeEventListener('pointermove', this.onPointerMove);
     window.removeEventListener('pointerup', this.onPointerUp);

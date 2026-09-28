@@ -120,16 +120,70 @@ const {
       let lastChapter = 1;
       let ticking = false;
 
-      // Passive scroll progress listener
+      const chapterIds = [
+        'chapter-arrival',
+        'chapter-reveal',
+        'chapter-games',
+        'chapter-tournaments',
+        'chapter-compete',
+        'chapter-leaderboard',
+        'chapter-champion'
+      ];
+
+      // Cache section elements
+      let sectionElements: (HTMLElement | null)[] = [];
+      const cacheSections = () => {
+        sectionElements = chapterIds.map(id => document.getElementById(id));
+      };
+      cacheSections();
+
+      // Passive scroll progress listener with exact section spatial awareness
       const onScroll = () => {
         if (!ticking) {
           window.requestAnimationFrame(() => {
             const scrollRange = document.documentElement.scrollHeight - window.innerHeight;
             if (scrollRange > 0) {
               const progress = window.scrollY / scrollRange;
-              sceneInstance?.setScrollProgress(progress);
 
-              const currentChapter = sceneInstance?.getCurrentChapter() || 1;
+              // Calculate continuous chapter float based on actual DOM section focal points
+              let chapterFloat = 1.0;
+              const focalY = window.scrollY + window.innerHeight * 0.45;
+
+              // Gather section centers
+              const validSections: { index: number; center: number }[] = [];
+              for (let i = 0; i < sectionElements.length; i++) {
+                const el = sectionElements[i];
+                if (el) {
+                  const rect = el.getBoundingClientRect();
+                  const top = rect.top + window.scrollY;
+                  const center = top + rect.height * 0.5;
+                  validSections.push({ index: i + 1, center });
+                }
+              }
+
+              if (validSections.length >= 2) {
+                if (focalY <= validSections[0].center) {
+                  chapterFloat = 1.0;
+                } else if (focalY >= validSections[validSections.length - 1].center) {
+                  chapterFloat = validSections[validSections.length - 1].index;
+                } else {
+                  for (let i = 0; i < validSections.length - 1; i++) {
+                    const c1 = validSections[i].center;
+                    const c2 = validSections[i + 1].center;
+                    if (focalY >= c1 && focalY <= c2) {
+                      const fraction = (focalY - c1) / Math.max(1, c2 - c1);
+                      chapterFloat = validSections[i].index + fraction;
+                      break;
+                    }
+                  }
+                }
+              } else {
+                chapterFloat = 1.0 + progress * 6.0;
+              }
+
+              sceneInstance?.setScrollProgress(progress, chapterFloat);
+
+              const currentChapter = sceneInstance?.getCurrentChapter() || Math.round(chapterFloat);
               if (currentChapter !== lastChapter) {
                 lastChapter = currentChapter;
                 window.dispatchEvent(
@@ -144,6 +198,7 @@ const {
       };
 
       window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', cacheSections, { passive: true });
       onScroll();
 
       // Expose globally for runtime inspection or testing

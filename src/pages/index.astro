@@ -5,14 +5,11 @@ import HeroChapter from '../components/hero/HeroChapter.astro';
 import CharacterRevealChapter from '../components/home/CharacterRevealChapter.astro';
 import GamesChapter from '../components/home/GamesChapter.astro';
 import TournamentsChapter from '../components/home/TournamentsChapter.astro';
-import LeagueTiers from '../components/home/LeagueTiers.astro';
 import BracketChapter from '../components/home/BracketChapter.astro';
 import LeaderboardChapter from '../components/home/LeaderboardChapter.astro';
 import EsportsNews from '../components/home/EsportsNews.astro';
 import ChampionshipChapter from '../components/home/ChampionshipChapter.astro';
 import ChapterHUD from '../components/ui/ChapterHUD.astro';
-import UserProfileWidget from '../components/ui/UserProfileWidget.astro';
-import UpcomingTicker from '../components/home/UpcomingTicker.astro';
 ---
 
 <Layout title="FCForge — Global Football Esports Arena | Interactive 3D Portal">
@@ -37,51 +34,31 @@ import UpcomingTicker from '../components/home/UpcomingTicker.astro';
   </div>
 
   <!-- Main Esports Portal Content Shell -->
-  <div class="relative z-10 space-y-16">
+  <div class="relative z-10 space-y-20 sm:space-y-28">
     <!-- CHAPTER 01 — ARENA ARRIVAL -->
     <HeroChapter />
 
     <!-- CHAPTER 02 — CHARACTER REVEAL -->
     <CharacterRevealChapter />
 
-    <!-- CHAPTER 03 TO 06 — MAIN ESPORTS PORTAL & FEED GRID -->
+    <!-- CHAPTER 03 — GAME SELECTION (Model smoothly glides into Left blank spot) -->
+    <GamesChapter />
+
+    <!-- CHAPTER 04 — TOURNAMENT PORTAL (Model smoothly glides into Right blank spot) -->
+    <TournamentsChapter />
+
+    <!-- CHAPTER 05 — COMPETITION ENGINE (Model smoothly glides into Left blank spot) -->
+    <BracketChapter />
+
+    <!-- CHAPTER 06 — GLOBAL RANKINGS & TIERS (Model smoothly glides into Right blank spot) -->
+    <LeaderboardChapter />
+
+    <!-- ESPORTS NEWS & BROADCASTS -->
     <div class="max-w-7xl mx-auto px-4 sm:px-8">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        <!-- Left Main Stream Feed (8 Cols) -->
-        <main class="lg:col-span-8 space-y-16">
-          <!-- CHAPTER 03 — GAME SELECTION -->
-          <GamesChapter />
-
-          <!-- CHAPTER 04 — TOURNAMENT PORTAL -->
-          <TournamentsChapter />
-
-          <!-- COMPETITIVE LEAGUE TIERS (Amateur, Premier, Legends Division Crests) -->
-          <LeagueTiers />
-
-          <!-- CHAPTER 05 — COMPETITION ENGINE (Holographic Match Bracket) -->
-          <BracketChapter />
-
-          <!-- CHAPTER 06 — GLOBAL RANKINGS -->
-          <LeaderboardChapter />
-
-          <!-- ESPORTS NEWS & BROADCASTS -->
-          <EsportsNews />
-        </main>
-
-        <!-- Right Esports Dashboard Sidebar (4 Cols - Inspired by Reference UI) -->
-        <aside class="lg:col-span-4 space-y-8 sticky top-24">
-          <!-- User Profile Passport -->
-          <UserProfileWidget />
-
-          <!-- Upcoming Events Ticker & Schedule -->
-          <UpcomingTicker />
-        </aside>
-
-      </div>
+      <EsportsNews />
     </div>
 
-    <!-- CHAPTER 07 — CHAMPIONSHIP FINALE -->
+    <!-- CHAPTER 07 — CHAMPIONSHIP FINALE (Podium Stage & Center Celebration) -->
     <ChampionshipChapter />
   </div>
 </Layout>

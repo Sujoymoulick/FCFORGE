@@ -276,3 +276,14 @@ body.fcforge-grabbing * {
   touch-action: none;
 }
 
+/* Optimize chapter layout containment for ultra-smooth 60fps scrolling */
+#chapter-arrival,
+#chapter-reveal,
+#chapter-games,
+#chapter-tournaments,
+#chapter-compete,
+#chapter-leaderboard,
+#chapter-champion {
+  contain: layout style;
+}
+

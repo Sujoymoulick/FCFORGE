@@ -39,6 +39,9 @@ export class FCForgePlayer3DScene {
   private atmosphericParticles: THREE.Points;
   private celebrationParticles: THREE.Points;
   private holographicBracket3D: THREE.Group;
+  private matchFootballMesh?: THREE.Group;
+  private matchOrbitRing?: THREE.Mesh;
+  private matchOrbitRingInner?: THREE.Mesh;
   private trophyGroup: THREE.Group;
 
   // Lights
@@ -66,12 +69,19 @@ export class FCForgePlayer3DScene {
   // Scroll & Animation States
   private scrollProgress = 0;
   private currentProgress = 0;
+  private targetChapterFloat = 1.0;
+  private currentChapterFloat = 1.0;
   private currentChapter = 1;
   private clock = new THREE.Clock();
   private animationFrameId: number | null = null;
   private isMobile = false;
   private isReducedMotion = false;
   private isModelLoaded = false;
+  private isDocumentVisible = true;
+
+  // Scratch vectors for zero-allocation lerping in render loop
+  private scratchCamTarget = new THREE.Vector3();
+  private scratchLookTarget = new THREE.Vector3();
 
   // Model Placement Offsets
   private basePlayerX = 0.88;
@@ -129,7 +139,7 @@ export class FCForgePlayer3DScene {
       powerPreference: 'high-performance'
     });
     this.renderer.setSize(width, height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.isMobile ? 1.25 : 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.isMobile ? 1.0 : 1.5));
     this.renderer.shadowMap.enabled = !this.isMobile;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -145,8 +155,8 @@ export class FCForgePlayer3DScene {
     this.keyLight.position.set(-4, 7, 5.5);
     this.keyLight.castShadow = !this.isMobile;
     if (this.keyLight.shadow) {
-      this.keyLight.shadow.mapSize.width = 1024;
-      this.keyLight.shadow.mapSize.height = 1024;
+      this.keyLight.shadow.mapSize.width = 512;
+      this.keyLight.shadow.mapSize.height = 512;
       this.keyLight.shadow.camera.near = 1;
       this.keyLight.shadow.camera.far = 20;
       this.keyLight.shadow.camera.left = -4;
@@ -237,10 +247,10 @@ export class FCForgePlayer3DScene {
     this.proceduralPlayer = this.createProceduralPlayer();
     this.playerSubGroup.add(this.proceduralPlayer);
 
-    // 7. Interactive 3D Bracket Engine Nodes (Chapter 5)
+    // 7. Interactive 3D Match Football & Holographic HUD (Chapter 5)
     this.holographicBracket3D = this.create3DHolographicBracket();
-    this.holographicBracket3D.position.set(0, 1.2, -2);
-    this.holographicBracket3D.visible = false;
+    this.holographicBracket3D.position.set(this.basePlayerX + 0.42, 0.22, 0.32);
+    this.holographicBracket3D.visible = true;
     this.scene.add(this.holographicBracket3D);
 
     // 8. Championship Trophy (Chapter 7)
@@ -265,6 +275,7 @@ export class FCForgePlayer3DScene {
     window.addEventListener('resize', this.onWindowResize, { passive: true });
     window.addEventListener('mousemove', this.onMouseMove, { passive: true });
     window.addEventListener('touchmove', this.onTouchMove, { passive: true });
+    document.addEventListener('visibilitychange', this.onVisibilityChange, { passive: true });
 
     // Direct Pointer Drag-to-Rotate Listeners
     window.addEventListener('pointerdown', this.onPointerDown, { passive: true });
@@ -691,31 +702,332 @@ export class FCForgePlayer3DScene {
     return group;
   }
 
-  // --- 3D Holographic Bracket (Chapter 5) ---
+  // --- 3D Match Football & Holographic Telemetry HUD (Chapter 5) ---
   private create3DHolographicBracket(): THREE.Group {
-    const group = new THREE.Group();
-    const nodePositions = [
-      [-1.8, 0.8, 0],
-      [-1.8, -0.4, 0],
-      [0, 0.2, 0],
-      [1.8, 0.2, 0]
-    ];
+    const rootGroup = new THREE.Group();
 
-    const nodeGeo = new THREE.BoxGeometry(0.8, 0.35, 0.1);
-    const nodeMat = new THREE.MeshBasicMaterial({
-      color: 0xFF6B35,
-      wireframe: true,
+    // 1. Math coordinates for truncated icosahedron (12 pentagons, 20 hexagons, 60 vertices)
+    const phi = (1 + Math.sqrt(5)) / 2;
+    const rawVerts: number[][] = [];
+    const addPerms = (a: number, b: number, c: number) => {
+      const perms = [[a, b, c], [b, c, a], [c, a, b]];
+      for (const [x, y, z] of perms) {
+        for (const sx of (x === 0 ? [0] : [-1, 1])) {
+          for (const sy of (y === 0 ? [0] : [-1, 1])) {
+            for (const sz of (z === 0 ? [0] : [-1, 1])) {
+              const pt = [sx * Math.abs(x), sy * Math.abs(y), sz * Math.abs(z)];
+              if (!rawVerts.some(v => Math.hypot(v[0] - pt[0], v[1] - pt[1], v[2] - pt[2]) < 1e-4)) {
+                rawVerts.push(pt);
+              }
+            }
+          }
+        }
+      }
+    };
+    addPerms(0, 1, 3 * phi);
+    addPerms(2, 1 + 2 * phi, phi);
+    addPerms(1, 2 + phi, 2 * phi);
+
+    const adj: number[][] = Array.from({ length: 60 }, () => []);
+    for (let i = 0; i < 60; i++) {
+      for (let j = i + 1; j < 60; j++) {
+        const d = Math.hypot(rawVerts[i][0] - rawVerts[j][0], rawVerts[i][1] - rawVerts[j][1], rawVerts[i][2] - rawVerts[j][2]);
+        if (Math.abs(d - 2) < 1e-3) {
+          adj[i].push(j);
+          adj[j].push(i);
+        }
+      }
+    }
+
+    const orderCycle = (cycle: number[]) => {
+      const ordered = [cycle[0]];
+      const rem = new Set(cycle.slice(1));
+      while (rem.size > 0) {
+        const curr = ordered[ordered.length - 1];
+        let next: number | null = null;
+        for (const cand of rem) {
+          if (adj[curr].includes(cand)) {
+            next = cand;
+            break;
+          }
+        }
+        if (next !== null) {
+          ordered.push(next);
+          rem.delete(next);
+        } else {
+          break;
+        }
+      }
+      const N = cycle.length;
+      const cx = ordered.reduce((s, idx) => s + rawVerts[idx][0], 0) / N;
+      const cy = ordered.reduce((s, idx) => s + rawVerts[idx][1], 0) / N;
+      const cz = ordered.reduce((s, idx) => s + rawVerts[idx][2], 0) / N;
+      const v0 = rawVerts[ordered[0]], v1 = rawVerts[ordered[1]];
+      const e0 = [v0[0] - cx, v0[1] - cy, v0[2] - cz];
+      const e1 = [v1[0] - cx, v1[1] - cy, v1[2] - cz];
+      const cross = [
+        e0[1] * e1[2] - e0[2] * e1[1],
+        e0[2] * e1[0] - e0[0] * e1[2],
+        e0[0] * e1[1] - e0[1] * e1[0]
+      ];
+      const dot = cross[0] * cx + cross[1] * cy + cross[2] * cz;
+      if (dot < 0) ordered.reverse();
+      return ordered;
+    };
+
+    const pentagons: number[][] = [];
+    const seenPent = new Set<string>();
+    for (let i = 0; i < 60; i++) {
+      for (const j of adj[i]) {
+        for (const k of adj[j]) {
+          if (k === i) continue;
+          for (const l of adj[k]) {
+            if (l === j || l === i) continue;
+            for (const m of adj[l]) {
+              if (m === k || m === j || m === i) continue;
+              if (adj[m].includes(i)) {
+                const cycle = [i, j, k, l, m];
+                const sorted = [...cycle].sort((a, b) => a - b).join(',');
+                if (!seenPent.has(sorted)) {
+                  seenPent.add(sorted);
+                  pentagons.push(orderCycle(cycle));
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    const hexagons: number[][] = [];
+    const seenHex = new Set<string>();
+    for (let i = 0; i < 60; i++) {
+      for (const j of adj[i]) {
+        for (const k of adj[j]) {
+          if (k === i) continue;
+          for (const l of adj[k]) {
+            if (l === j || l === i) continue;
+            for (const m of adj[l]) {
+              if (m === k || m === j || m === i) continue;
+              for (const n of adj[m]) {
+                if (n === l || n === k || n === j || n === i) continue;
+                if (adj[n].includes(i)) {
+                  const cycle = [i, j, k, l, m, n];
+                  const cx = cycle.reduce((s, idx) => s + rawVerts[idx][0], 0) / 6;
+                  const cy = cycle.reduce((s, idx) => s + rawVerts[idx][1], 0) / 6;
+                  const cz = cycle.reduce((s, idx) => s + rawVerts[idx][2], 0) / 6;
+                  if (Math.hypot(cx, cy, cz) < 4.6) {
+                    const sorted = [...cycle].sort((a, b) => a - b).join(',');
+                    if (!seenHex.has(sorted)) {
+                      seenHex.add(sorted);
+                      hexagons.push(orderCycle(cycle));
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    const radius = 0.26;
+    const insetFactor = 0.052;
+    const puffFactor = 1.028;
+
+    const buildPanelGeometry = (faces: number[][]) => {
+      const positions: number[] = [];
+      for (const face of faces) {
+        const N = face.length;
+        let cx = 0, cy = 0, cz = 0;
+        for (const idx of face) {
+          cx += rawVerts[idx][0];
+          cy += rawVerts[idx][1];
+          cz += rawVerts[idx][2];
+        }
+        const cNorm = Math.hypot(cx, cy, cz);
+        const cUnit = [cx / cNorm, cy / cNorm, cz / cNorm];
+        const cPuff = [
+          cUnit[0] * radius * puffFactor,
+          cUnit[1] * radius * puffFactor,
+          cUnit[2] * radius * puffFactor
+        ];
+
+        const insets: number[][] = [];
+        const baseInsets: number[][] = [];
+        for (let k = 0; k < N; k++) {
+          const v = rawVerts[face[k]];
+          const vNorm = Math.hypot(...v);
+          const vUnit = [v[0] / vNorm, v[1] / vNorm, v[2] / vNorm];
+          const ix = (vUnit[0] * (1 - insetFactor) + cUnit[0] * insetFactor) * radius;
+          const iy = (vUnit[1] * (1 - insetFactor) + cUnit[1] * insetFactor) * radius;
+          const iz = (vUnit[2] * (1 - insetFactor) + cUnit[2] * insetFactor) * radius;
+          insets.push([ix, iy, iz]);
+          baseInsets.push([
+            vUnit[0] * radius * 0.984,
+            vUnit[1] * radius * 0.984,
+            vUnit[2] * radius * 0.984
+          ]);
+        }
+
+        for (let k = 0; k < N; k++) {
+          const next = (k + 1) % N;
+          // Top cushion triangle
+          positions.push(...cPuff, ...insets[k], ...insets[next]);
+          // Side bevels descending into the recessed seam channel
+          positions.push(...insets[k], ...baseInsets[k], ...baseInsets[next]);
+          positions.push(...insets[k], ...baseInsets[next], ...insets[next]);
+        }
+      }
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geo.computeVertexNormals();
+      return geo;
+    };
+
+    // 2. Football Mesh Assembly
+    const footballGroup = new THREE.Group();
+
+    // 2A. Recessed Dark Seam Core Sphere
+    const coreGeo = new THREE.SphereGeometry(radius * 0.982, 32, 24);
+    const coreMat = new THREE.MeshStandardMaterial({
+      color: 0x0A0B0E,
+      roughness: 0.92,
+      metalness: 0.05
+    });
+    const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+    footballGroup.add(coreMesh);
+
+    // 2B. Pentagon Panels (Midnight Obsidian Carbon)
+    const pentGeo = buildPanelGeometry(pentagons);
+    const pentMat = new THREE.MeshStandardMaterial({
+      color: 0x14161C,
+      roughness: 0.28,
+      metalness: 0.25
+    });
+    const pentMesh = new THREE.Mesh(pentGeo, pentMat);
+    pentMesh.castShadow = true;
+    footballGroup.add(pentMesh);
+
+    // 2C. Hexagon Panels (Pearl White Luxury Leather)
+    const hexGeo = buildPanelGeometry(hexagons);
+    const hexMat = new THREE.MeshStandardMaterial({
+      color: 0xF7F8FA,
+      roughness: 0.24,
+      metalness: 0.12
+    });
+    const hexMesh = new THREE.Mesh(hexGeo, hexMat);
+    hexMesh.castShadow = true;
+    footballGroup.add(hexMesh);
+
+    // 2D. Gold Insignia on Equator Pentagons (FCForge Championship Accent)
+    const goldCrestPositions: number[] = [];
+    for (let pIdx = 0; pIdx < Math.min(4, pentagons.length); pIdx++) {
+      const face = pentagons[pIdx];
+      let cx = 0, cy = 0, cz = 0;
+      for (const idx of face) {
+        cx += rawVerts[idx][0];
+        cy += rawVerts[idx][1];
+        cz += rawVerts[idx][2];
+      }
+      const cNorm = Math.hypot(cx, cy, cz);
+      const cUnit = [cx / cNorm, cy / cNorm, cz / cNorm];
+      const crestPuff = [cUnit[0] * radius * 1.032, cUnit[1] * radius * 1.032, cUnit[2] * radius * 1.032];
+      for (let k = 0; k < 5; k++) {
+        const next = (k + 1) % 5;
+        const v1 = rawVerts[face[k]], v2 = rawVerts[face[next]];
+        const v1Norm = Math.hypot(...v1), v2Norm = Math.hypot(...v2);
+        const p1 = [
+          (v1[0] / v1Norm * 0.42 + cUnit[0] * 0.58) * radius * 1.03,
+          (v1[1] / v1Norm * 0.42 + cUnit[1] * 0.58) * radius * 1.03,
+          (v1[2] / v1Norm * 0.42 + cUnit[2] * 0.58) * radius * 1.03
+        ];
+        const p2 = [
+          (v2[0] / v2Norm * 0.42 + cUnit[0] * 0.58) * radius * 1.03,
+          (v2[1] / v2Norm * 0.42 + cUnit[1] * 0.58) * radius * 1.03,
+          (v2[2] / v2Norm * 0.42 + cUnit[2] * 0.58) * radius * 1.03
+        ];
+        goldCrestPositions.push(...crestPuff, ...p1, ...p2);
+      }
+    }
+    const goldCrestGeo = new THREE.BufferGeometry();
+    goldCrestGeo.setAttribute('position', new THREE.Float32BufferAttribute(goldCrestPositions, 3));
+    goldCrestGeo.computeVertexNormals();
+    const goldCrestMat = new THREE.MeshStandardMaterial({
+      color: 0xE5B869,
+      metalness: 0.95,
+      roughness: 0.15,
+      emissive: 0x332200,
+      emissiveIntensity: 0.25
+    });
+    const goldCrestMesh = new THREE.Mesh(goldCrestGeo, goldCrestMat);
+    footballGroup.add(goldCrestMesh);
+
+    this.matchFootballMesh = footballGroup;
+    rootGroup.add(footballGroup);
+
+    // 3. Holographic Bracket Telemetry Orbit Rings (Active during Chapter 5)
+    const hudGroup = new THREE.Group();
+
+    // 3A. Outer Gold Gimbal Orbit Ring
+    const outerRingGeo = new THREE.TorusGeometry(radius * 1.48, 0.0032, 16, 64);
+    const outerRingMat = new THREE.MeshBasicMaterial({
+      color: 0xE5B869,
       transparent: true,
-      opacity: 0.8
+      opacity: 0.0,
+      depthWrite: false
+    });
+    this.matchOrbitRing = new THREE.Mesh(outerRingGeo, outerRingMat);
+    this.matchOrbitRing.rotation.x = Math.PI / 3;
+    hudGroup.add(this.matchOrbitRing);
+
+    // 3B. Inner Cyan Telemetry Ring
+    const innerRingGeo = new THREE.TorusGeometry(radius * 1.30, 0.0022, 16, 64);
+    const innerRingMat = new THREE.MeshBasicMaterial({
+      color: 0x00E5FF,
+      transparent: true,
+      opacity: 0.0,
+      depthWrite: false
+    });
+    this.matchOrbitRingInner = new THREE.Mesh(innerRingGeo, innerRingMat);
+    this.matchOrbitRingInner.rotation.y = Math.PI / 4;
+    hudGroup.add(this.matchOrbitRingInner);
+
+    // 3C. Holographic Corner Bracket Reticles (Replacing wireframe box with precision telemetry)
+    const cornerMat = new THREE.LineBasicMaterial({
+      color: 0xE5B869,
+      transparent: true,
+      opacity: 0.75
+    });
+    const bracketSize = radius * 1.5;
+    const cornerArm = 0.08;
+    const corners = [
+      [-bracketSize, -bracketSize],
+      [bracketSize, -bracketSize],
+      [bracketSize, bracketSize],
+      [-bracketSize, bracketSize]
+    ];
+    corners.forEach(([cx, cy]) => {
+      const sx = cx > 0 ? -1 : 1;
+      const sy = cy > 0 ? -1 : 1;
+      const pts = [
+        new THREE.Vector3(cx + sx * cornerArm, cy, 0),
+        new THREE.Vector3(cx, cy, 0),
+        new THREE.Vector3(cx, cy + sy * cornerArm, 0)
+      ];
+      const cornerGeo = new THREE.BufferGeometry().setFromPoints(pts);
+      const cornerLine = new THREE.Line(cornerGeo, cornerMat);
+      hudGroup.add(cornerLine);
     });
 
-    nodePositions.forEach(([x, y, z]) => {
-      const node = new THREE.Mesh(nodeGeo, nodeMat);
-      node.position.set(x, y, z);
-      group.add(node);
-    });
+    // 3D. Warm Ambient Telemetry Beacon Light
+    const beaconLight = new THREE.PointLight(0xE5B869, 1.2, 2.5);
+    beaconLight.position.set(0, 0, 0.2);
+    hudGroup.add(beaconLight);
 
-    return group;
+    rootGroup.add(hudGroup);
+    return rootGroup;
   }
 
   // --- Championship Trophy (Chapter 7) ---
@@ -898,9 +1210,14 @@ export class FCForgePlayer3DScene {
     return new THREE.Points(geometry, material);
   }
 
-  // --- Scroll State Interpolation ---
-  public setScrollProgress(progress: number) {
+  // --- Scroll State Interpolation (Continuous Chapter Tracking) ---
+  public setScrollProgress(progress: number, chapterFloat?: number) {
     this.scrollProgress = Math.max(0, Math.min(1, progress));
+    if (typeof chapterFloat === 'number' && !isNaN(chapterFloat)) {
+      this.targetChapterFloat = Math.max(1, Math.min(7, chapterFloat));
+    } else {
+      this.targetChapterFloat = 1 + this.scrollProgress * 6;
+    }
   }
 
   // --- Public Interactive 3D Control Methods ---
@@ -934,6 +1251,14 @@ export class FCForgePlayer3DScene {
     if (e.touches.length > 0) {
       this.targetMouseX = (e.touches[0].clientX / window.innerWidth - 0.5) * 2;
       this.targetMouseY = (e.touches[0].clientY / window.innerHeight - 0.5) * 2;
+    }
+  };
+
+  private onVisibilityChange = () => {
+    this.isDocumentVisible = document.visibilityState === 'visible';
+    if (this.isDocumentVisible && this.animationFrameId === null) {
+      this.clock.start();
+      this.animate();
     }
   };
 
@@ -987,8 +1312,13 @@ export class FCForgePlayer3DScene {
     }
   };
 
-  // --- Main Render & Storyboard Loop ---
+  // --- Main Render Loop (Optimized, Zero-GC Allocations) ---
   private animate = () => {
+    if (!this.isDocumentVisible) {
+      this.animationFrameId = null;
+      return;
+    }
+
     this.animationFrameId = requestAnimationFrame(this.animate);
 
     const delta = this.clock.getDelta();
@@ -1000,8 +1330,8 @@ export class FCForgePlayer3DScene {
     }
 
     // Scroll progress smooth lerp
-    this.currentProgress += (this.scrollProgress - this.currentProgress) * 0.065;
-    const p = this.currentProgress;
+    this.currentProgress += (this.scrollProgress - this.currentProgress) * 0.08;
+    this.currentChapterFloat += (this.targetChapterFloat - this.currentChapterFloat) * 0.08;
 
     // Interactive 3D Model rotation physics & momentum damping
     if (!this.isPointerDown) {
@@ -1038,6 +1368,22 @@ export class FCForgePlayer3DScene {
       this.atmosphericParticles.rotation.y = elapsed * 0.025;
     }
 
+    // Dynamic 3D Match Football & Holographic HUD Rotation
+    if (!this.isReducedMotion) {
+      if (this.matchFootballMesh) {
+        this.matchFootballMesh.rotation.y += delta * 0.95;
+        this.matchFootballMesh.rotation.x += delta * 0.35;
+      }
+      if (this.matchOrbitRing) {
+        this.matchOrbitRing.rotation.z -= delta * 0.45;
+        this.matchOrbitRing.rotation.x = Math.PI / 3 + Math.sin(elapsed * 1.2) * 0.12;
+      }
+      if (this.matchOrbitRingInner) {
+        this.matchOrbitRingInner.rotation.z += delta * 0.6;
+        this.matchOrbitRingInner.rotation.y = Math.PI / 4 + Math.cos(elapsed * 1.5) * 0.15;
+      }
+    }
+
     // Procedural lifelike motion (micro-breathing & stance sway) if GLB has no clips
     if (!this.mixer && this.playerSubGroup) {
       const breathY = Math.sin(elapsed * 1.8) * 0.008;
@@ -1049,31 +1395,27 @@ export class FCForgePlayer3DScene {
       this.playerSubGroup.rotation.y = swayYaw;
     }
 
-    // Update multi-stage storyboard trajectory
-    this.updateStoryboard(p, elapsed);
+    // Update multi-stage storyboard trajectory across the blank spots
+    this.updateStoryboard(elapsed);
 
-    // Apply Camera Parallax & Smooth Lerp
+    // Apply Camera Parallax & Smooth Lerp (Using pre-allocated vectors to prevent GC pauses)
     if (!this.isReducedMotion) {
       const parallaxOffsetX = this.mouseX * (this.isMobile ? 0.15 : 0.32);
       const parallaxOffsetY = -this.mouseY * (this.isMobile ? 0.1 : 0.18);
 
-      this.currentCameraPos.lerp(
-        new THREE.Vector3(
-          this.targetCameraPos.x + parallaxOffsetX,
-          this.targetCameraPos.y + parallaxOffsetY,
-          this.targetCameraPos.z
-        ),
-        0.065
+      this.scratchCamTarget.set(
+        this.targetCameraPos.x + parallaxOffsetX,
+        this.targetCameraPos.y + parallaxOffsetY,
+        this.targetCameraPos.z
       );
+      this.currentCameraPos.lerp(this.scratchCamTarget, 0.065);
 
-      this.currentLookAt.lerp(
-        new THREE.Vector3(
-          this.targetLookAt.x + parallaxOffsetX * 0.45,
-          this.targetLookAt.y,
-          this.targetLookAt.z
-        ),
-        0.065
+      this.scratchLookTarget.set(
+        this.targetLookAt.x + parallaxOffsetX * 0.45,
+        this.targetLookAt.y,
+        this.targetLookAt.z
       );
+      this.currentLookAt.lerp(this.scratchLookTarget, 0.065);
 
       this.camera.position.copy(this.currentCameraPos);
       this.camera.lookAt(this.currentLookAt);
@@ -1087,179 +1429,157 @@ export class FCForgePlayer3DScene {
     this.renderer.render(this.scene, this.camera);
   };
 
-  // --- Storyboard Trajectory Across Scroll Progress ---
-  private updateStoryboard(p: number, elapsed: number) {
+  // --- Storyboard Trajectory (Smooth Spline Motion across designated Blank Spots) ---
+  private updateStoryboard(elapsed: number) {
     const isMob = this.isMobile;
 
-    if (p <= 0.15) {
-      // CHAPTER 01 — HERO (Flagship Arrival)
-      this.currentChapter = 1;
+    // Desktop Keyframe Poses:
+    // Ch 1 (Arrival): Blank spot RIGHT (x=0.88), model faces user/left
+    // Ch 2 (Profile): Blank spot RIGHT (x=0.85), closer heroic camera shot
+    // Ch 3 (Games): Blank spot LEFT (x=-0.85), model glides across & faces right toward game cards
+    // Ch 4 (Tournaments): Blank spot RIGHT (x=0.85), model glides across & faces left toward tourneys
+    // Ch 5 (Match Engine): Blank spot LEFT (x=-0.85), model glides across & faces right toward bracket
+    // Ch 6 (Rankings): Blank spot RIGHT (x=0.85), model glides across & faces left toward ladder
+    // Ch 7 (Championship): Model centered behind trophy podium (x=0, z=-0.6)
+    const desktopPoses = [
+      { playerX: 0.88, playerY: 0, playerZ: 0, playerRotY: 0.12, camX: 0.35, camY: 1.35, camZ: 4.85, lookX: 0.35, lookY: 1.05, lookZ: 0, fov: 39, cyanRim: 14, greenRim: 9.5, keyLight: 4.2 },
+      { playerX: 0.85, playerY: 0, playerZ: 0, playerRotY: -0.20, camX: 0.45, camY: 1.25, camZ: 3.90, lookX: 0.45, lookY: 1.00, lookZ: 0, fov: 38, cyanRim: 18, greenRim: 12.0, keyLight: 4.5 },
+      { playerX: -0.85, playerY: 0, playerZ: 0, playerRotY: 0.42, camX: -0.35, camY: 1.35, camZ: 4.85, lookX: -0.20, lookY: 1.05, lookZ: 0, fov: 40, cyanRim: 16, greenRim: 11.0, keyLight: 4.2 },
+      { playerX: 0.85, playerY: 0, playerZ: 0, playerRotY: -0.38, camX: 0.35, camY: 1.35, camZ: 4.85, lookX: 0.20, lookY: 1.05, lookZ: 0, fov: 40, cyanRim: 16, greenRim: 10.0, keyLight: 4.2 },
+      { playerX: -0.85, playerY: 0, playerZ: 0, playerRotY: 0.35, camX: -0.35, camY: 1.40, camZ: 4.90, lookX: -0.15, lookY: 1.05, lookZ: 0, fov: 40, cyanRim: 18, greenRim: 12.0, keyLight: 4.4 },
+      { playerX: 0.85, playerY: 0, playerZ: 0, playerRotY: -0.28, camX: 0.35, camY: 1.35, camZ: 4.85, lookX: 0.20, lookY: 1.05, lookZ: 0, fov: 40, cyanRim: 16, greenRim: 11.0, keyLight: 4.2 },
+      { playerX: 0.00, playerY: 0, playerZ: -0.6, playerRotY: 0.00, camX: 0.00, camY: 1.25, camZ: 4.60, lookX: 0.00, lookY: 0.95, lookZ: 0, fov: 42, cyanRim: 22, greenRim: 14.0, keyLight: 5.5 }
+    ];
 
-      if (isMob) {
-        this.targetCameraPos.set(0, 1.25, 5.6);
-        this.targetLookAt.set(0, 0.95, 0);
-        this.targetFov = 44;
-        this.playerGroup.position.set(0, -0.15, 0);
-      } else {
-        // Desktop: Center-Right hero stance
-        this.basePlayerX = 0.88;
-        this.targetCameraPos.set(0.35, 1.35, 4.85);
-        this.targetLookAt.set(0.35, 1.05, 0);
-        this.targetFov = 39;
-        this.playerGroup.position.set(this.basePlayerX, 0, 0);
-      }
+    // Mobile Keyframe Poses (Centered to avoid edge clipping):
+    const mobilePoses = [
+      { playerX: 0, playerY: -0.15, playerZ: 0, playerRotY: 0.08, camX: 0, camY: 1.25, camZ: 5.6, lookX: 0, lookY: 0.95, lookZ: 0, fov: 44, cyanRim: 14, greenRim: 9.5, keyLight: 4.2 },
+      { playerX: 0, playerY: -0.12, playerZ: 0, playerRotY: -0.15, camX: 0, camY: 1.15, camZ: 4.6, lookX: 0, lookY: 0.90, lookZ: 0, fov: 42, cyanRim: 18, greenRim: 11.0, keyLight: 4.5 },
+      { playerX: 0, playerY: -0.15, playerZ: 0, playerRotY: 0.25, camX: 0, camY: 1.25, camZ: 5.4, lookX: 0, lookY: 0.90, lookZ: 0, fov: 44, cyanRim: 15, greenRim: 10.0, keyLight: 4.2 },
+      { playerX: 0, playerY: -0.15, playerZ: 0, playerRotY: -0.22, camX: 0, camY: 1.25, camZ: 5.4, lookX: 0, lookY: 0.90, lookZ: 0, fov: 44, cyanRim: 15, greenRim: 10.0, keyLight: 4.2 },
+      { playerX: 0, playerY: -0.15, playerZ: 0, playerRotY: 0.20, camX: 0, camY: 1.25, camZ: 5.4, lookX: 0, lookY: 0.90, lookZ: 0, fov: 44, cyanRim: 16, greenRim: 11.0, keyLight: 4.4 },
+      { playerX: 0, playerY: -0.15, playerZ: 0, playerRotY: -0.18, camX: 0, camY: 1.25, camZ: 5.4, lookX: 0, lookY: 0.90, lookZ: 0, fov: 44, cyanRim: 15, greenRim: 10.0, keyLight: 4.2 },
+      { playerX: 0, playerY: -0.10, playerZ: -0.4, playerRotY: 0.00, camX: 0, camY: 1.20, camZ: 5.0, lookX: 0, lookY: 0.90, lookZ: 0, fov: 44, cyanRim: 20, greenRim: 13.0, keyLight: 5.0 }
+    ];
 
-      // Cursor turn + Interactive User Rotation
-      const cursorTurn = this.mouseX * 0.12;
-      this.playerGroup.rotation.y = cursorTurn + this.userRotationY;
-      this.playerGroup.rotation.x = this.userRotationX;
+    // Storyboard Hermite spline evaluation across float progress [1.0 .. 7.0]
+    const clampedFloat = Math.max(1, Math.min(7, this.currentChapterFloat));
+    const baseIdx = Math.max(0, Math.min(5, Math.floor(clampedFloat - 1)));
+    const nextIdx = Math.min(6, baseIdx + 1);
+    const localT = Math.max(0, Math.min(1, (clampedFloat - 1) - baseIdx));
+    // Hermite cubic ease for ultra-smooth acceleration & deceleration
+    const ease = localT * localT * (3 - 2 * localT);
 
-      // When player is facing backward (seeing #10 jersey), boost golden rim light!
-      const normalizedAngle = ((this.userRotationY % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-      const isFacingBack = Math.cos(normalizedAngle) < -0.15;
-      this.cyanRimLight.intensity = isFacingBack ? 22 : 14;
-      this.greenRimLight.intensity = isFacingBack ? 16 : 9.5;
+    const p1 = isMob ? mobilePoses[baseIdx] : desktopPoses[baseIdx];
+    const p2 = isMob ? mobilePoses[nextIdx] : desktopPoses[nextIdx];
 
-      // Shadow & Halo follow base player
-      this.contactShadowMesh.position.x = this.playerGroup.position.x;
-      this.turfHaloRing.position.x = this.playerGroup.position.x;
-      this.turfInnerGlow.position.x = this.playerGroup.position.x;
-      this.groundFootLight.position.x = this.playerGroup.position.x;
+    const targetX = THREE.MathUtils.lerp(p1.playerX, p2.playerX, ease);
+    const targetY = THREE.MathUtils.lerp(p1.playerY, p2.playerY, ease);
+    const targetZ = THREE.MathUtils.lerp(p1.playerZ, p2.playerZ, ease);
+    const targetRotY = THREE.MathUtils.lerp(p1.playerRotY, p2.playerRotY, ease);
 
-      this.keyLight.intensity = 4.2;
-      this.trophySpotLight.intensity = 0;
+    this.targetCameraPos.set(
+      THREE.MathUtils.lerp(p1.camX, p2.camX, ease),
+      THREE.MathUtils.lerp(p1.camY, p2.camY, ease),
+      THREE.MathUtils.lerp(p1.camZ, p2.camZ, ease)
+    );
 
-      this.holographicBracket3D.visible = false;
-      this.trophyGroup.scale.set(0, 0, 0);
-      this.celebrationParticles.visible = false;
+    this.targetLookAt.set(
+      THREE.MathUtils.lerp(p1.lookX, p2.lookX, ease),
+      THREE.MathUtils.lerp(p1.lookY, p2.lookY, ease),
+      THREE.MathUtils.lerp(p1.lookZ, p2.lookZ, ease)
+    );
 
-    } else if (p <= 0.28) {
-      // CHAPTER 02 — CHARACTER REVEAL (Entering Arena)
-      this.currentChapter = 2;
-      const t = (p - 0.15) / 0.13;
+    this.targetFov = THREE.MathUtils.lerp(p1.fov, p2.fov, ease);
 
-      if (isMob) {
-        this.targetCameraPos.set(0, THREE.MathUtils.lerp(1.25, 0.95, t), THREE.MathUtils.lerp(5.6, 3.8, t));
-        this.targetLookAt.set(0, 0.85, 0);
-      } else {
-        this.targetCameraPos.set(
-          THREE.MathUtils.lerp(0.45, 0.65, t),
-          THREE.MathUtils.lerp(1.4, 0.95, t),
-          THREE.MathUtils.lerp(5.0, 3.3, t)
-        );
-        this.targetLookAt.set(0.4, 0.85, 0);
-        this.targetFov = 38;
-      }
+    // Apply smooth player movement with high-fidelity damping
+    this.playerGroup.position.x += (targetX - this.playerGroup.position.x) * 0.085;
+    this.playerGroup.position.y += (targetY - this.playerGroup.position.y) * 0.085;
+    this.playerGroup.position.z += (targetZ - this.playerGroup.position.z) * 0.085;
 
-      this.playerGroup.rotation.y = THREE.MathUtils.lerp(0, 0.25, t) + this.userRotationY;
-      this.playerGroup.rotation.x = this.userRotationX;
-      this.cyanRimLight.intensity = 16;
-      this.greenRimLight.intensity = 11;
+    // Combine storyboard rotation with user interactive drag rotation
+    const baseTurn = isMob ? 0 : this.mouseX * 0.08;
+    const targetTotalRotY = targetRotY + baseTurn + this.userRotationY;
+    this.playerGroup.rotation.y += (targetTotalRotY - this.playerGroup.rotation.y) * 0.085;
+    this.playerGroup.rotation.x += (this.userRotationX - this.playerGroup.rotation.x) * 0.085;
 
-    } else if (p <= 0.44) {
-      // CHAPTER 03 — CHOOSE YOUR BATTLE (eFootball vs EA FC)
-      this.currentChapter = 3;
-      const t = (p - 0.28) / 0.16;
+    // Ground shadows, halo rings, and ground bounce light follow player in perfect lockstep
+    this.contactShadowMesh.position.x = this.playerGroup.position.x;
+    this.contactShadowMesh.position.z = this.playerGroup.position.z;
+    this.turfHaloRing.position.x = this.playerGroup.position.x;
+    this.turfHaloRing.position.z = this.playerGroup.position.z;
+    this.turfInnerGlow.position.x = this.playerGroup.position.x;
+    this.turfInnerGlow.position.z = this.playerGroup.position.z;
+    this.groundFootLight.position.x = this.playerGroup.position.x;
+    this.groundFootLight.position.z = this.playerGroup.position.z + 0.3;
 
-      if (isMob) {
-        this.targetCameraPos.set(0, 1.35, 5.0);
-        this.targetLookAt.set(0, 0.8, 0);
-      } else {
-        this.targetCameraPos.set(
-          THREE.MathUtils.lerp(0.65, 1.4, t),
-          THREE.MathUtils.lerp(0.95, 1.25, t),
-          THREE.MathUtils.lerp(3.3, 4.5, t)
-        );
-        this.targetLookAt.set(-0.4, 0.7, 0);
-        this.targetFov = 44;
-      }
+    // Rim lighting boost when facing away (#10 jersey back view)
+    const normalizedAngle = ((this.playerGroup.rotation.y % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    const isFacingBack = Math.cos(normalizedAngle) < -0.15;
+    const baseCyan = THREE.MathUtils.lerp(p1.cyanRim, p2.cyanRim, ease);
+    const baseGreen = THREE.MathUtils.lerp(p1.greenRim, p2.greenRim, ease);
+    const baseKey = THREE.MathUtils.lerp(p1.keyLight, p2.keyLight, ease);
 
-      this.playerGroup.position.x = isMob ? 0 : THREE.MathUtils.lerp(this.basePlayerX, -0.65, t);
-      this.playerGroup.rotation.y = THREE.MathUtils.lerp(0.25, -0.45, t);
+    this.cyanRimLight.intensity = isFacingBack ? baseCyan * 1.5 : baseCyan;
+    this.greenRimLight.intensity = isFacingBack ? baseGreen * 1.4 : baseGreen;
+    this.keyLight.intensity = baseKey;
 
-      this.contactShadowMesh.position.x = this.playerGroup.position.x;
-      this.turfHaloRing.position.x = this.playerGroup.position.x;
-      this.turfInnerGlow.position.x = this.playerGroup.position.x;
-      this.groundFootLight.position.x = this.playerGroup.position.x;
+    // 3D Match Football & Holographic Telemetry HUD (Levitating in Chapter 5 Spotlight)
+    const ch5Intensity = Math.max(0, 1 - Math.abs(this.currentChapterFloat - 5.0) * 1.5);
 
-    } else if (p <= 0.60) {
-      // CHAPTER 04 — TOURNAMENTS PORTAL
-      this.currentChapter = 4;
-      const t = (p - 0.44) / 0.16;
+    let targetBallX: number;
+    let targetBallY: number;
+    let targetBallZ: number;
 
-      this.targetCameraPos.set(
-        THREE.MathUtils.lerp(1.4, -1.6, t),
-        THREE.MathUtils.lerp(1.25, 1.7, t),
-        THREE.MathUtils.lerp(4.5, 4.6, t)
-      );
-      this.targetLookAt.set(0.3, 0.5, 0);
-
-      this.playerGroup.position.x = isMob ? 0 : THREE.MathUtils.lerp(-0.65, 0.7, t);
-      this.playerGroup.rotation.y = THREE.MathUtils.lerp(-0.45, 0.5, t);
-
-      this.contactShadowMesh.position.x = this.playerGroup.position.x;
-      this.turfHaloRing.position.x = this.playerGroup.position.x;
-      this.turfInnerGlow.position.x = this.playerGroup.position.x;
-
-    } else if (p <= 0.76) {
-      // CHAPTER 05 — COMPETITION / MATCH ENGINE
-      this.currentChapter = 5;
-      const t = (p - 0.60) / 0.16;
-
-      this.targetCameraPos.set(
-        THREE.MathUtils.lerp(-1.6, 0, t),
-        THREE.MathUtils.lerp(1.7, 2.0, t),
-        THREE.MathUtils.lerp(4.6, 5.2, t)
-      );
-      this.targetLookAt.set(0, 0.4, 0);
-
-      this.playerGroup.position.x = 0;
-      this.playerGroup.rotation.y = THREE.MathUtils.lerp(0.5, 0, t);
-
-      this.holographicBracket3D.visible = true;
-      this.holographicBracket3D.rotation.y = elapsed * 0.3;
-
-    } else if (p <= 0.88) {
-      // CHAPTER 06 — GLOBAL RANKING
-      this.currentChapter = 6;
-      const t = (p - 0.76) / 0.12;
-
-      this.targetCameraPos.set(
-        THREE.MathUtils.lerp(0, -1.2, t),
-        THREE.MathUtils.lerp(2.0, 1.45, t),
-        THREE.MathUtils.lerp(5.2, 4.7, t)
-      );
-      this.targetLookAt.set(0.2, 0.5, 0);
-
-      this.playerGroup.rotation.y = elapsed * 0.3;
-      this.holographicBracket3D.visible = false;
-      this.trophyGroup.scale.set(0, 0, 0);
-
+    if (this.currentChapterFloat < 4.2) {
+      // Resting on turf beside the player's front cleat
+      targetBallX = this.playerGroup.position.x + (isMob ? 0.28 : 0.42);
+      targetBallY = 0.22;
+      targetBallZ = this.playerGroup.position.z + 0.32;
+    } else if (this.currentChapterFloat >= 4.2 && this.currentChapterFloat <= 5.8) {
+      // Levitating up into the Chapter 5 Competition Engine spotlight
+      const hoverBob = Math.sin(elapsed * 2.2) * 0.04;
+      targetBallX = this.playerGroup.position.x + (isMob ? 0.0 : 0.72);
+      targetBallY = 1.05 + hoverBob;
+      targetBallZ = 0.32;
     } else {
-      // CHAPTER 07 — CHAMPIONSHIP FINALE
-      this.currentChapter = 7;
-      const t = (p - 0.88) / 0.12;
+      // Resting on pitch near leaderboard / trophy podium
+      targetBallX = this.playerGroup.position.x + (isMob ? 0.28 : 0.42);
+      targetBallY = 0.22;
+      targetBallZ = this.playerGroup.position.z + 0.30;
+    }
 
-      this.targetCameraPos.set(0, 1.1, 4.2);
-      this.targetLookAt.set(0, 0.85, 0);
-      this.targetFov = 42;
+    this.holographicBracket3D.position.x += (targetBallX - this.holographicBracket3D.position.x) * 0.085;
+    this.holographicBracket3D.position.y += (targetBallY - this.holographicBracket3D.position.y) * 0.085;
+    this.holographicBracket3D.position.z += (targetBallZ - this.holographicBracket3D.position.z) * 0.085;
+    this.holographicBracket3D.visible = true;
 
-      this.playerGroup.position.set(0, 0, -0.4);
-      this.playerGroup.rotation.y = elapsed * 0.15;
+    // Fade holographic HUD rings in during Chapter 5
+    if (this.matchOrbitRing && this.matchOrbitRing.material instanceof THREE.Material) {
+      (this.matchOrbitRing.material as THREE.MeshBasicMaterial).opacity = ch5Intensity * 0.75;
+    }
+    if (this.matchOrbitRingInner && this.matchOrbitRingInner.material instanceof THREE.Material) {
+      (this.matchOrbitRingInner.material as THREE.MeshBasicMaterial).opacity = ch5Intensity * 0.60;
+    }
 
-      // Hide background duplicate trophy so foreground interactive 3D trophy stage takes center podium
-      this.trophyGroup.visible = false;
-      this.trophyGroup.scale.set(0, 0, 0);
-
-      this.trophySpotLight.intensity = 0;
-      this.keyLight.color.setHex(0xFFD700);
-      this.keyLight.intensity = 5.5;
-      this.cyanRimLight.color.setHex(0xFF6B35);
-      this.cyanRimLight.intensity = 18;
-
+    // Championship celebration particles & lighting (Chapter 7 Podium Finale)
+    if (this.currentChapterFloat >= 6.3) {
       this.celebrationParticles.visible = true;
       this.celebrationParticles.rotation.y = elapsed * 0.15;
+      this.keyLight.color.setHex(0xFFD700);
+      this.cyanRimLight.color.setHex(0xFF6B35);
+    } else {
+      this.celebrationParticles.visible = false;
+      this.keyLight.color.setHex(0xF8F5EE);
+      this.cyanRimLight.color.setHex(0xE5B869);
     }
+
+    // Hide background duplicate trophy so foreground interactive 3D trophy stage takes center podium
+    this.trophyGroup.visible = false;
+    this.trophyGroup.scale.set(0, 0, 0);
+
+    // Keep active chapter index updated for HUD
+    this.currentChapter = Math.max(1, Math.min(7, Math.round(this.currentChapterFloat)));
   }
 
   // --- Window Resize & Responsive DPR Adjustment ---
@@ -1274,12 +1594,16 @@ export class FCForgePlayer3DScene {
     this.camera.updateProjectionMatrix();
 
     this.renderer.setSize(width, height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.isMobile ? 1.25 : 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.isMobile ? 1.0 : 1.5));
   };
 
   // --- Public Status Getter ---
   public getCurrentChapter(): number {
     return this.currentChapter;
+  }
+
+  public getCurrentChapterFloat(): number {
+    return this.currentChapterFloat;
   }
 
   // --- Cleanup & Memory Disposal ---
@@ -1290,6 +1614,7 @@ export class FCForgePlayer3DScene {
     window.removeEventListener('resize', this.onWindowResize);
     window.removeEventListener('mousemove', this.onMouseMove);
     window.removeEventListener('touchmove', this.onTouchMove);
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
 
     this.scene.clear();
     this.renderer.dispose();
