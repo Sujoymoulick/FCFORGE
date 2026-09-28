@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 export interface ChampionshipTrophySceneOptions {
   canvas: HTMLCanvasElement;
@@ -19,9 +20,11 @@ export class ChampionshipTrophyScene {
   private trophyGroup: THREE.Group;
   private pedestalGroup: THREE.Group;
   private starMesh!: THREE.Mesh;
-  private innerGlowMesh!: THREE.Mesh;
+  private innerGlowMesh?: THREE.Mesh;
   private particlesMesh!: THREE.Points;
   private haloRingMesh!: THREE.Mesh;
+  private worldCupModel?: THREE.Object3D;
+  private placeholderTrophy?: THREE.Group;
 
   // Lights
   private keySpotLight!: THREE.SpotLight;
@@ -222,121 +225,17 @@ export class ChampionshipTrophyScene {
     return group;
   }
 
-  // --- Authentic 3D Championship Trophy ---
+  // --- Official 3D FIFA World Cup Trophy (WORLDCUP3D.glb) ---
   private createTrophy(): THREE.Group {
     const trophy = new THREE.Group();
     // Position on top of the pedestal deck (y = 0.20)
     trophy.position.y = 0.20;
 
-    // Materials
-    const goldMat = new THREE.MeshStandardMaterial({
-      color: 0xE5B869,
-      metalness: 0.96,
-      roughness: 0.14,
-      emissive: 0x4A2C00,
-      emissiveIntensity: 0.18
-    });
-
-    const obsidianMat = new THREE.MeshStandardMaterial({
-      color: 0x12100E,
-      roughness: 0.18,
-      metalness: 0.88
-    });
-
-    // 1. Trophy Marble Step 1
-    const base1Geo = new THREE.CylinderGeometry(0.38, 0.44, 0.12, 32);
-    const base1 = new THREE.Mesh(base1Geo, obsidianMat);
-    base1.position.y = 0.06;
-    trophy.add(base1);
-
-    // 2. Gold Step Ring
-    const stepGoldGeo = new THREE.CylinderGeometry(0.34, 0.38, 0.06, 32);
-    const stepGold = new THREE.Mesh(stepGoldGeo, goldMat);
-    stepGold.position.y = 0.15;
-    trophy.add(stepGold);
-
-    // 3. Trophy Marble Step 2
-    const base2Geo = new THREE.CylinderGeometry(0.30, 0.34, 0.10, 32);
-    const base2 = new THREE.Mesh(base2Geo, obsidianMat);
-    base2.position.y = 0.23;
-    trophy.add(base2);
-
-    // 4. Front Golden Engraved Plaque ("SEASON 4 CHAMPION")
-    const plaqueGeo = new THREE.BoxGeometry(0.24, 0.07, 0.02);
-    const plaqueMat = new THREE.MeshStandardMaterial({
-      color: 0xFFF5D0,
-      metalness: 0.92,
-      roughness: 0.12,
-      emissive: 0xE5B869,
-      emissiveIntensity: 0.3
-    });
-    const plaque = new THREE.Mesh(plaqueGeo, plaqueMat);
-    plaque.position.set(0, 0.23, 0.31);
-    trophy.add(plaque);
-
-    // 5. Fluted Stem Pillar
-    const stemGeo = new THREE.CylinderGeometry(0.09, 0.18, 0.32, 24);
-    const stem = new THREE.Mesh(stemGeo, goldMat);
-    stem.position.y = 0.44;
-    trophy.add(stem);
-
-    // Decorative Stem Torus Ring
-    const stemRingGeo = new THREE.TorusGeometry(0.14, 0.03, 16, 32);
-    const stemRing = new THREE.Mesh(stemRingGeo, goldMat);
-    stemRing.position.y = 0.54;
-    stemRing.rotation.x = Math.PI / 2;
-    trophy.add(stemRing);
-
-    // 6. Sculpted Flared Golden Cup Bowl (Lathe Geometry)
-    const lathePoints: THREE.Vector2[] = [];
-    lathePoints.push(new THREE.Vector2(0.06, 0.0));
-    lathePoints.push(new THREE.Vector2(0.15, 0.10));
-    lathePoints.push(new THREE.Vector2(0.26, 0.26));
-    lathePoints.push(new THREE.Vector2(0.38, 0.48));
-    lathePoints.push(new THREE.Vector2(0.42, 0.58));
-    lathePoints.push(new THREE.Vector2(0.40, 0.60));
-    lathePoints.push(new THREE.Vector2(0.36, 0.54));
-    lathePoints.push(new THREE.Vector2(0.24, 0.28));
-    lathePoints.push(new THREE.Vector2(0.13, 0.12));
-    lathePoints.push(new THREE.Vector2(0.04, 0.0));
-
-    const cupGeo = new THREE.LatheGeometry(lathePoints, 36);
-    const cup = new THREE.Mesh(cupGeo, goldMat);
-    cup.position.y = 0.58;
-    trophy.add(cup);
-
-    // 7. Glowing Inner Core Reservoir
-    const innerGeo = new THREE.CylinderGeometry(0.36, 0.08, 0.50, 32);
-    const innerMat = new THREE.MeshStandardMaterial({
-      color: 0xFFD700,
-      metalness: 0.8,
-      roughness: 0.2,
-      emissive: 0xFFAA00,
-      emissiveIntensity: 0.45
-    });
-    this.innerGlowMesh = new THREE.Mesh(innerGeo, innerMat);
-    this.innerGlowMesh.position.y = 0.84;
-    trophy.add(this.innerGlowMesh);
-
-    // 8. Dual Sculpted Torus Handles
-    const handleGeo = new THREE.TorusGeometry(0.26, 0.032, 16, 36, Math.PI * 1.15);
-    
-    const leftHandle = new THREE.Mesh(handleGeo, goldMat);
-    leftHandle.position.set(-0.38, 0.86, 0);
-    leftHandle.rotation.z = Math.PI * 0.22;
-    trophy.add(leftHandle);
-
-    const rightHandle = new THREE.Mesh(handleGeo, goldMat);
-    rightHandle.position.set(0.38, 0.86, 0);
-    rightHandle.rotation.z = -Math.PI * 0.22;
-    rightHandle.rotation.y = Math.PI;
-    trophy.add(rightHandle);
-
-    // 9. Floating 5-Point Crown Star
+    // 1. Floating 5-Point Golden Champion Crown Star (Above the World Cup Globe)
     const starShape = new THREE.Shape();
     const numPoints = 5;
-    const outerRadius = 0.13;
-    const innerRadius = 0.055;
+    const outerRadius = 0.11;
+    const innerRadius = 0.048;
     for (let i = 0; i < numPoints * 2; i++) {
       const radius = i % 2 === 0 ? outerRadius : innerRadius;
       const angle = (i * Math.PI) / numPoints - Math.PI / 2;
@@ -348,24 +247,68 @@ export class ChampionshipTrophyScene {
     starShape.closePath();
 
     const starGeo = new THREE.ExtrudeGeometry(starShape, {
-      depth: 0.03,
+      depth: 0.024,
       bevelEnabled: true,
       bevelSegments: 2,
       steps: 1,
-      bevelSize: 0.012,
-      bevelThickness: 0.012
+      bevelSize: 0.01,
+      bevelThickness: 0.01
     });
 
     const starMat = new THREE.MeshStandardMaterial({
       color: 0xFFF2A6,
-      metalness: 0.92,
-      roughness: 0.1,
+      metalness: 0.94,
+      roughness: 0.12,
       emissive: 0xE5B869,
       emissiveIntensity: 0.65
     });
     this.starMesh = new THREE.Mesh(starGeo, starMat);
-    this.starMesh.position.set(0, 1.28, 0);
+    this.starMesh.position.set(0, 1.26, 0);
     trophy.add(this.starMesh);
+
+    // 2. Load the official 3D FIFA World Cup Trophy GLB
+    const loader = new GLTFLoader();
+    loader.load(
+      '/assets/3d/WORLDCUP3D.glb',
+      (gltf) => {
+        const model = gltf.scene;
+
+        // Accurate bounding box calculation
+        const box = new THREE.Box3().setFromObject(model);
+        const size = box.getSize(new THREE.Vector3());
+        const center = box.getCenter(new THREE.Vector3());
+
+        // Target height ~1.12 units (perfect proportion on the pedestal)
+        const targetHeight = 1.12;
+        const scale = targetHeight / (size.y || 1);
+        model.scale.set(scale, scale, scale);
+
+        // Center model in X and Z, align base cleanly at y = 0 of trophyGroup
+        model.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale);
+
+        // Enhance gold luster & enable shadow reception
+        model.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+            if (child.material) {
+              child.material.envMapIntensity = 1.6;
+              if (child.material instanceof THREE.MeshStandardMaterial) {
+                child.material.metalness = Math.max(child.material.metalness, 0.92);
+                child.material.roughness = Math.min(child.material.roughness, 0.22);
+              }
+            }
+          }
+        });
+
+        this.worldCupModel = model;
+        trophy.add(model);
+      },
+      undefined,
+      (err) => {
+        console.warn('[TROPHY 3D] Failed to load WORLDCUP3D.glb:', err);
+      }
+    );
 
     return trophy;
   }
@@ -472,12 +415,19 @@ export class ChampionshipTrophyScene {
   public triggerCelebrationFlare() {
     this.flareIntensity = 1.5;
     this.rotationVelocityY = 0.08;
-    // Animate glowing elements
-    if (this.innerGlowMesh) {
-      (this.innerGlowMesh.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.8;
+    if (this.keySpotLight) {
+      this.keySpotLight.intensity = 34;
     }
     if (this.starMesh) {
-      (this.starMesh.material as THREE.MeshStandardMaterial).emissiveIntensity = 2.0;
+      (this.starMesh.material as THREE.MeshStandardMaterial).emissiveIntensity = 2.4;
+    }
+    if (this.worldCupModel) {
+      this.worldCupModel.traverse((child) => {
+        if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
+          child.material.emissive = new THREE.Color(0x664400);
+          child.material.emissiveIntensity = 0.65;
+        }
+      });
     }
   }
 
@@ -526,12 +476,16 @@ export class ChampionshipTrophyScene {
     // 4. Flare Decay
     if (this.flareIntensity > 0) {
       this.flareIntensity = Math.max(0, this.flareIntensity - delta * 2.0);
-      this.keySpotLight.intensity = 18 + this.flareIntensity * 25;
-      if (this.innerGlowMesh) {
-        (this.innerGlowMesh.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.45 + this.flareIntensity * 1.0;
-      }
+      this.keySpotLight.intensity = 18 + this.flareIntensity * 16;
       if (this.starMesh) {
         (this.starMesh.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.65 + this.flareIntensity * 1.5;
+      }
+      if (this.worldCupModel) {
+        this.worldCupModel.traverse((child) => {
+          if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
+            child.material.emissiveIntensity = this.flareIntensity * 0.4;
+          }
+        });
       }
     }
 

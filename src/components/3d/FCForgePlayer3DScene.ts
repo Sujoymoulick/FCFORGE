@@ -43,6 +43,7 @@ export class FCForgePlayer3DScene {
   private matchOrbitRing?: THREE.Mesh;
   private matchOrbitRingInner?: THREE.Mesh;
   private trophyGroup: THREE.Group;
+  private grassGroup: THREE.Group = new THREE.Group(); // Tiled GRASS3D.glb surface
 
   // Lights
   private ambientLight: THREE.AmbientLight;
@@ -202,9 +203,15 @@ export class FCForgePlayer3DScene {
     this.stadiumGroup = new THREE.Group();
     this.scene.add(this.stadiumGroup);
 
-    // 5A. Pitch Surface
+    // 5A. Pitch Surface (thin dark base — grass GLBs will sit on top)
     this.pitchDisc = this.createPitchDisc();
     this.stadiumGroup.add(this.pitchDisc);
+
+    // 5A-GRASS. Load tiled GRASS3D.glb surface — replaces the flat disc visually
+    this.grassGroup = new THREE.Group();
+    this.grassGroup.position.y = 0; // sits exactly on y=0 ground plane
+    this.stadiumGroup.add(this.grassGroup);
+    this.loadGrassSurface('/assets/3d/GRASS3D.glb');
 
     // 5B. Pitch Markings
     this.pitchLinesGroup = this.createPitchLines();
@@ -398,18 +405,92 @@ export class FCForgePlayer3DScene {
     }
   }
 
-  // --- Pitch Floor Disc ---
+  // --- Tiled Grass Surface from GRASS3D.glb ---
+  private loadGrassSurface(path: string): void {
+    const loader = new GLTFLoader();
+    // Tile configuration — fills a 24×24 unit ground plane
+    const TILE_COUNT_X = 7;   // columns
+    const TILE_COUNT_Z = 7;   // rows
+    const TILE_SIZE    = 3.6; // world-units per tile (tweak if GLB has different natural size)
+    const TOTAL_W = TILE_COUNT_X * TILE_SIZE;
+    const TOTAL_D = TILE_COUNT_Z * TILE_SIZE;
+    const OFFSET_X = -TOTAL_W / 2 + TILE_SIZE / 2;
+    const OFFSET_Z = -TOTAL_D / 2 + TILE_SIZE / 2;
+
+    loader.load(
+      path,
+      (gltf) => {
+        // Measure the loaded tile's natural bounding box
+        const templateScene = gltf.scene;
+        const box = new THREE.Box3().setFromObject(templateScene);
+        const size = new THREE.Vector3();
+        box.getSize(size);
+
+        // Scale so the tile's largest horizontal extent == TILE_SIZE
+        const naturalSize = Math.max(size.x, size.z) || 1;
+        const tileScale = TILE_SIZE / naturalSize;
+
+        // Sink the tile so its bottom sits at y=0
+        const bottomY = box.min.y * tileScale;
+
+        for (let row = 0; row < TILE_COUNT_Z; row++) {
+          for (let col = 0; col < TILE_COUNT_X; col++) {
+            // Clone the entire scene graph (deep copy)
+            const tile = templateScene.clone(true);
+            tile.scale.setScalar(tileScale);
+
+            // Position in grid
+            const x = OFFSET_X + col * TILE_SIZE;
+            const z = OFFSET_Z + row * TILE_SIZE;
+            tile.position.set(x, -bottomY, z);
+
+            // Alternate 90° rotations for visual variety (breaks repetition)
+            const rotVariants = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
+            tile.rotation.y = rotVariants[(row * TILE_COUNT_X + col) % 4];
+
+            // Enable shadows on every mesh inside the tile
+            tile.traverse((child) => {
+              if ((child as THREE.Mesh).isMesh) {
+                const mesh = child as THREE.Mesh;
+                mesh.receiveShadow = true;
+                mesh.castShadow = !this.isMobile;
+
+                // Slightly boost the grass material to match stadium lighting
+                if (mesh.material) {
+                  const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+                  mats.forEach((mat) => {
+                    if (mat instanceof THREE.MeshStandardMaterial) {
+                      mat.roughness  = Math.min(mat.roughness  + 0.05, 1.0);
+                      mat.envMapIntensity = 0.4;
+                    }
+                  });
+                }
+              }
+            });
+
+            this.grassGroup.add(tile);
+          }
+        }
+      },
+      undefined,
+      (err) => {
+        console.warn('[FCForge] GRASS3D.glb failed to load — keeping dark pitch disc', err);
+      }
+    );
+  }
+
+  // --- Pitch Floor Disc (kept as shadow receiver fallback under grass) ---
   private createPitchDisc(): THREE.Mesh {
     const geo = new THREE.CircleGeometry(22, 64);
     const mat = new THREE.MeshStandardMaterial({
-      color: 0x05090D,
-      roughness: 0.9,
-      metalness: 0.1,
+      color: 0x0A1A08,    // very dark green to blend if grass doesn't load
+      roughness: 0.98,
+      metalness: 0.0,
       side: THREE.DoubleSide
     });
     const pitch = new THREE.Mesh(geo, mat);
     pitch.rotation.x = -Math.PI / 2;
-    pitch.position.y = 0;
+    pitch.position.y = -0.01; // just below y=0 so grass sits on top
     pitch.receiveShadow = !this.isMobile;
     return pitch;
   }
